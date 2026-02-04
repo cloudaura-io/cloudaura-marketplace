@@ -1,0 +1,9 @@
+Conductor Plugin for Claude Code
+Copyright 2025 CloudAura.io
+
+This product is a port of the Conductor Extension for Gemini CLI
+(https://github.com/gemini-cli-extensions/conductor), originally licensed
+under the Apache License, Version 2.0.
+
+The port from Gemini CLI extension to Claude Code plugin was performed
+using Claude Code with Task Master AI.

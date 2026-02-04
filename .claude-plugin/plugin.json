@@ -1,0 +1,17 @@
+{
+  "name": "conductor",
+  "version": "0.2.1",
+  "description": "Context-driven development framework. Measure twice, code once.",
+  "author": {
+    "name": "CloudAura"
+  },
+  "repository": "https://github.com/cloudaura-io/conductor-claude-code",
+  "license": "Apache-2.0",
+  "keywords": [
+    "conductor",
+    "project-management",
+    "spec-driven",
+    "tdd"
+  ],
+  "skills": "./skills/"
+}
