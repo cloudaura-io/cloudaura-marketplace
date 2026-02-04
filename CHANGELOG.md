@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/cloudaura-io/conductor-claude-code/compare/conductor-v0.2.1...conductor-v0.3.0) (2026-02-04)
+
+
+### Features
+
+* Conductor Plugin for Claude Code ([4b1083f](https://github.com/cloudaura-io/conductor-claude-code/commit/4b1083f4d33e2397109e9f70be808417eebf3d87))
+
 ## [0.2.1](https://github.com/cloudaura-io/conductor-claude-code/compare/conductor-v0.2.0...conductor-v0.2.1) (2026-02-04)
 
 
