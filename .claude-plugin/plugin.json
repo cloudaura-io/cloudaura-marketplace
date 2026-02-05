@@ -1,6 +1,6 @@
 {
   "name": "conductor",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "description": "Context-driven development framework. Measure twice, code once.",
   "author": {
     "name": "CloudAura"

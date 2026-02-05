@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.0](https://github.com/cloudaura-io/conductor-claude-code/compare/conductor-v0.3.0...conductor-v1.0.0) (2026-02-05)
+
+
+### ⚠ BREAKING CHANGES
+
+* Installation method changed from --plugin-dir to marketplace
+
+### Bug Fixes
+
+* remove unsupported SKILL.md fields and add marketplace config ([577b70d](https://github.com/cloudaura-io/conductor-claude-code/commit/577b70d82b80f7ab4c97479623315ebb18c089a3))
+
 ## [0.3.0](https://github.com/cloudaura-io/conductor-claude-code/compare/conductor-v0.2.1...conductor-v0.3.0) (2026-02-04)
 
 
