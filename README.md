@@ -5,7 +5,7 @@ A collection of plugins for Claude Code by CloudAura.
 ## Installation
 
 ```bash
-claude plugin marketplace add cloudaura-io/conductor-claude-code
+claude plugin marketplace add cloudaura-io/cloudaura-marketplace
 ```
 
 ## Available Plugins
