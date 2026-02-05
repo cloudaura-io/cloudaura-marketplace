@@ -10,6 +10,9 @@ claude plugin marketplace add cloudaura-io/conductor-claude-code
 
 ## Available Plugins
 
+> [!WARNING]
+> **Skills may not appear in autocomplete** due to a [known Claude Code limitation](https://github.com/anthropics/claude-code/issues/18949). Type commands manually or run the plugin's `scripts/setup-autocomplete.sh` script.
+
 | Plugin | Description |
 |--------|-------------|
 | [conductor](plugins/conductor/) | Context-driven development framework. Measure twice, code once.<br>Ported from [gemini-cli-extensions/conductor](https://github.com/gemini-cli-extensions/conductor). |
