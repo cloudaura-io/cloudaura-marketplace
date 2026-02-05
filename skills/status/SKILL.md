@@ -2,7 +2,6 @@
 name: status
 description: Displays the current progress of the project
 disable-model-invocation: true
-model: sonnet
 allowed-tools: Read, Bash, Glob, Grep
 ---
 

@@ -3,9 +3,6 @@ name: review
 description: Reviews completed track work against guidelines and plan
 argument-hint: "[track name or 'current']"
 disable-model-invocation: true
-context: fork
-agent: general-purpose
-model: opus
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 

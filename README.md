@@ -22,12 +22,34 @@ The philosophy behind Conductor is simple: control your code. By treating contex
 
 ## Installation
 
-Clone this repository and pass it as the plugin directory when starting Claude Code:
+### Step 1: Add the marketplace
 
 ```bash
-git clone https://github.com/cloudaura-io/conductor-claude-code.git
-claude --plugin-dir ./conductor-claude-code
+claude plugin marketplace add https://github.com/cloudaura-io/conductor-claude-code.git
 ```
+
+### Step 2: Install the plugin
+
+For all projects (user scope):
+```bash
+claude plugin install conductor@conductor-marketplace --scope user
+```
+
+Or for a specific project only:
+```bash
+cd /path/to/your/project
+claude plugin install conductor@conductor-marketplace --scope local
+```
+
+### Step 3: Verify installation
+
+Start a new Claude Code session and type `/conductor:` - you should see available commands:
+- `/conductor:setup`
+- `/conductor:new-track`
+- `/conductor:implement`
+- `/conductor:status`
+- `/conductor:revert`
+- `/conductor:review`
 
 ## Usage
 

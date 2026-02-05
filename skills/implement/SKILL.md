@@ -3,9 +3,6 @@ name: implement
 description: Executes tasks from the specified track's plan
 argument-hint: "[track name]"
 disable-model-invocation: true
-context: fork
-agent: general-purpose
-model: opus
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
