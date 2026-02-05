@@ -32,13 +32,13 @@ claude plugin marketplace add https://github.com/cloudaura-io/conductor-claude-c
 
 For all projects (user scope):
 ```bash
-claude plugin install conductor@conductor-marketplace --scope user
+claude plugin install conductor@cloudaura-marketplace --scope user
 ```
 
 Or for a specific project only:
 ```bash
 cd /path/to/your/project
-claude plugin install conductor@conductor-marketplace --scope local
+claude plugin install conductor@cloudaura-marketplace --scope local
 ```
 
 ### Step 3: Verify installation
