@@ -9,13 +9,14 @@
     {
       "name": "conductor",
       "description": "Context-driven development framework. Measure twice, code once.",
-      "version": "0.3.0",
       "author": {
         "name": "CloudAura"
       },
       "source": "./plugins/conductor",
       "category": "development",
-      "homepage": "https://github.com/cloudaura-io/conductor-claude-code"
+      "homepage": "https://github.com/cloudaura-io/conductor-claude-code",
+      "strict": true,
+      "_strict_note": "Explicit strict:true ensures version is taken from plugin.json (single source of truth)"
     }
   ]
 }
