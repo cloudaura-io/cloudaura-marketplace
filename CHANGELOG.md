@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.0](https://github.com/cloudaura-io/conductor-claude-code/compare/conductor-v0.3.0...conductor-v1.0.0) (2026-02-05)
+
+
+### ⚠ BREAKING CHANGES
+
+* Installation method changed from --plugin-dir to marketplace
+
+### Bug Fixes
+
+* add marketplace config ([09c40d7](https://github.com/cloudaura-io/conductor-claude-code/commit/09c40d708bb68d6c21508091feaee90abfddb602))
+
 ## [0.3.0](https://github.com/cloudaura-io/conductor-claude-code/compare/conductor-v0.2.1...conductor-v0.3.0) (2026-02-04)
 
 
