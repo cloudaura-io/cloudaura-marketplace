@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "conductor-marketplace",
-  "description": "Conductor plugin for Claude Code - Context-driven development framework",
+  "name": "cloudaura-marketplace",
+  "description": "CloudAura plugins for Claude Code",
   "owner": {
     "name": "CloudAura"
   },
@@ -9,11 +9,11 @@
     {
       "name": "conductor",
       "description": "Context-driven development framework. Measure twice, code once.",
-      "version": "0.2.1",
+      "version": "0.3.0",
       "author": {
         "name": "CloudAura"
       },
-      "source": ".",
+      "source": "./plugins/conductor",
       "category": "development",
       "homepage": "https://github.com/cloudaura-io/conductor-claude-code"
     }
