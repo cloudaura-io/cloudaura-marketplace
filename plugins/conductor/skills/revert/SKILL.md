@@ -1,5 +1,5 @@
 ---
-name: revert
+name: conductor:revert
 description: Reverts previous work using git-aware analysis
 argument-hint: "[track|phase|task target]"
 disable-model-invocation: true

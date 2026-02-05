@@ -1,5 +1,5 @@
 ---
-name: implement
+name: conductor:implement
 description: Executes tasks from the specified track's plan
 argument-hint: "[track name]"
 disable-model-invocation: true

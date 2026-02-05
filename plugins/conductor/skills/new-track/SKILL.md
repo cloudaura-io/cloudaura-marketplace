@@ -1,5 +1,5 @@
 ---
-name: new-track
+name: conductor:new-track
 description: Plans a track, generates spec and plan documents
 argument-hint: "[track description]"
 disable-model-invocation: true

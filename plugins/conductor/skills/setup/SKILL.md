@@ -1,5 +1,5 @@
 ---
-name: setup
+name: conductor:setup
 description: Scaffolds the project and sets up the Conductor environment
 disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep

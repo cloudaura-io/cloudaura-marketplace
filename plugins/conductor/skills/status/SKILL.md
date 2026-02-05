@@ -1,5 +1,5 @@
 ---
-name: status
+name: conductor:status
 description: Displays the current progress of the project
 disable-model-invocation: true
 model: sonnet
