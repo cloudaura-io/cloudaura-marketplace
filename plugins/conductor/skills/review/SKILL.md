@@ -122,8 +122,8 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
     -   **Strategy Selection:**
 
         > **Note:** For immediate diff context, you can use dynamic injection:
-        > !`git diff --shortstat <revision_range>`
-        > !`git diff <revision_range>`
+        > `git diff --shortstat <revision_range>`
+        > `git diff <revision_range>`
 
         -   **Small/Medium Changes (< 300 lines):**
             -   Run `git diff <revision_range>` to get the full context in one go.
