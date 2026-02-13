@@ -98,8 +98,14 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
 2.  **Auto-Detect Scope:**
     -   If no input, read the **Tracks Registry**.
     -   Look for a track marked as `[~] In Progress`.
-    -   If one exists, ask the user: "Do you want to review the in-progress track '<track_name>'? (yes/no)"
-    -   If no track is in progress, or user says "no", ask: "What would you like to review? (Enter a track name, or typing 'current' for uncommitted changes)"
+    -   If one exists, use the `AskUserQuestion` tool with:
+        - **header:** "Scope"
+        - **question:** "Do you want to review the in-progress track '<track_name>'?"
+        - **multiSelect:** false
+        - **options:**
+            1. label: "Yes (Recommended)", description: "Review the in-progress track"
+            2. label: "No", description: "Specify a different review scope"
+    -   If no track is in progress, or user declines, ask: "What would you like to review? (Enter a track name, or type 'current' for uncommitted changes)"
 3.  **Confirm Scope:** Ensure you and the user agree on what is being reviewed.
 
 ### 2.2 Retrieve Context
@@ -188,15 +194,17 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
         -   If only **Medium/Low** issues found: "Recommend **APPROVE WITH COMMENTS**."
         -   If no issues found: "Recommend **APPROVE**."
     -   **Action:**
-        -   **If issues found:** Ask:
-            > "Do you want me to apply the suggested fixes, fix them manually yourself, or proceed to complete the track?
-            > A. **Apply Fixes:** Automatically apply the suggested code changes.
-            > B. **Manual Fix:** Stop so you can fix issues yourself.
-            > C. **Complete Track:** Ignore warnings and proceed to cleanup.
-            > Please enter your choice (A, B, or C)."
-            -   **If "A" (Apply Fixes):** Apply the code modifications suggested in the findings using file editing tools. Then Proceed to next step.
-            -   **If "B" (Manual Fix):** Terminate operation to allow user to edit code.
-            -   **If "C" (Complete Track):** Proceed to the next step.
+        -   **If issues found:** Use the `AskUserQuestion` tool with:
+            - **header:** "Issues"
+            - **question:** "How would you like to handle the found issues?"
+            - **multiSelect:** false
+            - **options:**
+                1. label: "Apply fixes (Recommended)", description: "Automatically apply the suggested code changes"
+                2. label: "Manual fix", description: "Stop so you can fix issues yourself"
+                3. label: "Complete track", description: "Ignore warnings and proceed to cleanup"
+            -   **If "Apply fixes":** Apply the code modifications suggested in the findings using file editing tools. Then proceed to next step.
+            -   **If "Manual fix":** Terminate operation to allow user to edit code.
+            -   **If "Complete track":** Proceed to the next step.
         -   **If no issues found:** Proceed to the next step.
 
 2.  **Track Cleanup:**
@@ -204,22 +212,24 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
 
     a.  **Context Check:** If you are NOT reviewing a specific track (e.g., just reviewing current changes without a track context), SKIP this entire section.
 
-    b.  **Ask for User Choice:**
-        > "Review complete. What would you like to do with track '<track_name>'?
-        > A.  **Archive:** Move to `conductor/archive/` and update registry.
-        > B.  **Delete:** Permanently remove from system.
-        > C.  **Skip:** Leave as is.
-        > Please enter your choice (A, B, or C)."
+    b.  **Ask for User Choice:** Use the `AskUserQuestion` tool with:
+        - **header:** "Cleanup"
+        - **question:** "Review complete. What would you like to do with track '<track_name>'?"
+        - **multiSelect:** false
+        - **options:**
+            1. label: "Archive (Recommended)", description: "Move to conductor/archive/ and update registry"
+            2. label: "Delete", description: "Permanently remove from system"
+            3. label: "Skip", description: "Leave as is"
 
     c.  **Handle User Response:**
-        *   **If "A" (Archive):**
+        *   **If "Archive":**
             i.   **Setup:** Ensure `conductor/archive/` exists.
             ii.  **Move:** Move track folder to `conductor/archive/<track_id>`.
             iii. **Update Registry:** Remove track section from **Tracks Registry**.
             iv.  **Commit:** Stage registry and archive. Commit: `chore(conductor): Archive track '<track_name>'`.
             v.   **Announce:** "Track '<track_name>' archived."
-        *   **If "B" (Delete):**
+        *   **If "Delete":**
             i.   **Confirm:** "WARNING: Irreversible deletion. Proceed? (yes/no)"
             ii.  **If yes:** Delete track folder, remove from **Tracks Registry**, commit (`chore(conductor): Delete track '<track_name>'`), announce success.
             iii. **If no:** Cancel.
-        *   **If "C" (Skip):** Leave track as is.
+        *   **If "Skip":** Leave track as is.
