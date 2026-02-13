@@ -14,9 +14,7 @@
       },
       "source": "./plugins/conductor",
       "category": "development",
-      "homepage": "https://github.com/cloudaura-io/conductor-claude-code",
-      "strict": true,
-      "_strict_note": "Explicit strict:true ensures version is taken from plugin.json (single source of truth)"
+      "homepage": "https://github.com/cloudaura-io/conductor-claude-code"
     }
   ]
 }
