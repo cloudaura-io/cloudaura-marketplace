@@ -189,9 +189,9 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
                 *   **CRITICAL:** Ask questions sequentially (one by one). Wait for user response before next question.
                 *   Confirm your understanding by summarizing before moving on.
     -   **FOR EXISTING PROJECTS (BROWNFIELD):** Ask project context-aware questions based on the code analysis.
-    -   **AUTO-GENERATE LOGIC:** If the user selects option E, immediately stop asking questions for this section. Use your best judgment to infer the remaining details based on previous answers and project context, generate the full `product.md` content, write it to the file, and proceed to the next section.
-3.  **Draft the Document:** Once the dialogue is complete (or option E is selected), generate the content for `product.md`. If option E was chosen, use your best judgment to infer the remaining details based on previous answers and project context. You are encouraged to expand on the gathered details to create a comprehensive document.
-    -   **CRITICAL:** The source of truth for generation is **only the user's selected answer(s)**. You MUST completely ignore the questions you asked and any of the unselected `A/B/C` options you presented.
+    -   **AUTO-GENERATE LOGIC:** If the user selects the autogenerate option, immediately stop asking questions for this section. Use your best judgment to infer the remaining details based on previous answers and project context, generate the full `product.md` content, write it to the file, and proceed to the next section.
+3.  **Draft the Document:** Once the dialogue is complete (or the autogenerate option is selected), generate the content for `product.md`. If the autogenerate option was chosen, use your best judgment to infer the remaining details based on previous answers and project context. You are encouraged to expand on the gathered details to create a comprehensive document.
+    -   **CRITICAL:** The source of truth for generation is **only the user's selected answer(s)**. You MUST completely ignore the questions you asked and any of the unselected options you presented.
         -   **Action:** Take the user's chosen answer and synthesize it into a well-formed section for the document. You are encouraged to expand on the user's choice to create a comprehensive and polished output. DO NOT include the question options in the final file.
 4.  **User Confirmation Loop:** Present the drafted content to the user for review and begin the confirmation loop.
     - Display the drafted content in a markdown code block
@@ -234,8 +234,8 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
             *   **CRITICAL:** Ask questions sequentially (one by one). Wait for user response before next question.
             *   Confirm your understanding by summarizing before moving on.
     -   **AUTO-GENERATE LOGIC:** If the user selects the autogenerate option, immediately stop asking questions and proceed to draft the document.
-3.  **Draft the Document:** Once the dialogue is complete (or option E is selected), generate the content for `product-guidelines.md`. If option E was chosen, use your best judgment to infer the remaining details based on previous answers and project context. You are encouraged to expand on the gathered details to create a comprehensive document.
-     **CRITICAL:** The source of truth for generation is **only the user's selected answer(s)**. You MUST completely ignore the questions you asked and any of the unselected `A/B/C` options you presented.
+3.  **Draft the Document:** Once the dialogue is complete (or the autogenerate option is selected), generate the content for `product-guidelines.md`. If the autogenerate option was chosen, use your best judgment to infer the remaining details based on previous answers and project context. You are encouraged to expand on the gathered details to create a comprehensive document.
+     **CRITICAL:** The source of truth for generation is **only the user's selected answer(s)**. You MUST completely ignore the questions you asked and any of the unselected options you presented.
     -   **Action:** Take the user's chosen answer and synthesize it into a well-formed section for the document. You are encouraged to expand on the user's choice to create a comprehensive and polished output. DO NOT include the question options in the final file.
 4.  **User Confirmation Loop:** Present the drafted content to the user for review and begin the confirmation loop.
     - Display the drafted content in a markdown code block
@@ -288,9 +288,9 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
                     1. label: "Yes (Recommended)", description: "The detected stack is accurate"
                     2. label: "No, corrections needed", description: "I need to provide the correct tech stack"
             -   **Handle Disagreement:** If the user disputes, allow them to provide the correct technology stack.
-    -   **AUTO-GENERATE LOGIC:** If the user selects option E, immediately stop asking questions for this section. Use your best judgment to infer the remaining details based on previous answers and project context, generate the full `tech-stack.md` content, write it to the file, and proceed to the next section.
-3.  **Draft the Document:** Once the dialogue is complete (or option E is selected), generate the content for `tech-stack.md`. If option E was chosen, use your best judgment to infer the remaining details based on previous answers and project context. You are encouraged to expand on the gathered details to create a comprehensive document.
-    -   **CRITICAL:** The source of truth for generation is **only the user's selected answer(s)**. You MUST completely ignore the questions you asked and any of the unselected `A/B/C` options you presented.
+    -   **AUTO-GENERATE LOGIC:** If the user selects the autogenerate option, immediately stop asking questions for this section. Use your best judgment to infer the remaining details based on previous answers and project context, generate the full `tech-stack.md` content, write it to the file, and proceed to the next section.
+3.  **Draft the Document:** Once the dialogue is complete (or the autogenerate option is selected), generate the content for `tech-stack.md`. If the autogenerate option was chosen, use your best judgment to infer the remaining details based on previous answers and project context. You are encouraged to expand on the gathered details to create a comprehensive document.
+    -   **CRITICAL:** The source of truth for generation is **only the user's selected answer(s)**. You MUST completely ignore the questions you asked and any of the unselected options you presented.
     -   **Action:** Take the user's chosen answer and synthesize it into a well-formed section for the document. You are encouraged to expand on the user's choice to create a comprehensive and polished output. DO NOT include the question options in the final file.
 4.  **User Confirmation Loop:** Present the drafted content to the user for review and begin the confirmation loop.
     - Display the drafted content in a markdown code block
