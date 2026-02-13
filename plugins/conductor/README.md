@@ -19,6 +19,15 @@ The philosophy behind Conductor is simple: control your code. By treating contex
 - **Work as a team**: Set project-level context for your product, tech stack, and workflow preferences that become a shared foundation for your team.
 - **Build on existing projects**: Intelligent initialization for both new (Greenfield) and existing (Brownfield) projects.
 - **Smart revert**: A git-aware revert command that understands logical units of work (tracks, phases, tasks) rather than just commit hashes.
+- **Interactive forms**: Native Claude Code UI with keyboard navigation.
+
+## Interactive Forms
+
+Conductor uses Claude Code's `AskUserQuestion` tool for all prompts. Navigate with arrow keys, select with Enter, type custom answers.
+
+| Select option | Custom input |
+|---------------|--------------|
+| ![Select](docs/interactive-select.png) | ![Input](docs/interactive-input.png) |
 
 ## Installation
 
