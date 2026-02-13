@@ -215,24 +215,26 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
 
 1.  **Execution Trigger:** This protocol MUST only be executed after the current track has been successfully implemented and the `SYNCHRONIZE PROJECT DOCUMENTATION` step is complete.
 
-2.  **Ask for User Choice:** You MUST prompt the user with the available options for the completed track.
-    > "Track '<track_description>' is now complete. What would you like to do?
-    > A.  **Review (Recommended):** Run the review command to verify changes before finalizing.
-    > B.  **Archive:** Move the track's folder to `conductor/archive/` and remove it from the tracks file.
-    > C.  **Delete:** Permanently delete the track's folder and remove it from the tracks file.
-    > D.  **Skip:** Do nothing and leave it in the tracks file.
-    > Please enter the option of your choice (A, B, C, or D)."
+2.  **Ask for User Choice:** Use the `AskUserQuestion` tool with:
+    - **header:** "Cleanup"
+    - **question:** "Track '<track_description>' is complete. What would you like to do?"
+    - **multiSelect:** false
+    - **options:**
+        1. label: "Review (Recommended)", description: "Run /conductor:review to verify changes before finalizing"
+        2. label: "Archive", description: "Move track folder to conductor/archive/ and remove from registry"
+        3. label: "Delete", description: "Permanently delete track folder and remove from registry"
+        4. label: "Skip", description: "Do nothing, leave track in the registry"
 
 3.  **Handle User Response:**
-    *   **If user chooses "A" (Review):**
+    *   **If user chooses "Review":**
         *   Announce: "Please run `/conductor:review` to verify your changes. You will be able to archive or delete the track after the review."
-    *   **If user chooses "B" (Archive):**
+    *   **If user chooses "Archive":**
         i.   **Create Archive Directory:** Check for the existence of `conductor/archive/`. If it does not exist, create it.
         ii.  **Archive Track Folder:** Move the track's folder from its current location (resolved via the **Tracks Directory**) to `conductor/archive/<track_id>`.
         iii. **Remove from Tracks File:** Read the content of the **Tracks Registry** file, remove the entire section for the completed track (the part that starts with `---` and contains the track description), and write the modified content back to the file.
         iv.  **Commit Changes:** Stage the **Tracks Registry** file and `conductor/archive/`. Commit with the message `chore(conductor): Archive track '<track_description>'`.
         v.   **Announce Success:** Announce: "Track '<track_description>' has been successfully archived."
-    *   **If user chooses "C" (Delete):**
+    *   **If user chooses "Delete":**
         i. **CRITICAL WARNING:** Before proceeding, you MUST ask for a final confirmation due to the irreversible nature of the action.
             > "WARNING: This will permanently delete the track folder and all its contents. This action cannot be undone. Are you sure you want to proceed? (yes/no)"
         ii. **Handle Confirmation:**
@@ -243,5 +245,5 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
                 d. **Announce Success:** Announce: "Track '<track_description>' has been permanently deleted."
             - **If 'no' (or anything else)**:
                 a. **Announce Cancellation:** Announce: "Deletion cancelled. The track has not been changed."
-    *   **If user chooses "D" (Skip) or provides any other input:**
+    *   **If user chooses "Skip" or provides any other input:**
         *   Announce: "Okay, the completed track will remain in your tracks file for now."
