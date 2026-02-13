@@ -115,11 +115,13 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
         -   **Begin Brownfield Project Initialization Protocol:**
             -   **1.0 Pre-analysis Confirmation:**
                 1.  **Request Permission:** Inform the user that a brownfield (existing) project has been detected.
-                2.  **Ask for Permission:** Request permission for a read-only scan to analyze the project with the following options using the next structure:
-                    > A) Yes
-                    > B) No
-                    >
-                    >  Please respond with A or B.
+                2.  **Ask for Permission:** Use the `AskUserQuestion` tool with:
+                    - **header:** "Scan"
+                    - **question:** "May I perform a read-only scan to analyze your project?"
+                    - **multiSelect:** false
+                    - **options:**
+                        1. label: "Yes (Recommended)", description: "Allow read-only analysis of project files"
+                        2. label: "No", description: "Cancel and await further instructions"
                 3.  **Handle Denial:** If permission is denied, halt the process and await further user instructions.
                 4.  **Confirmation:** Upon confirmation, proceed to the next step.
 
@@ -168,45 +170,40 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
         -   **CONSTRAINT:** Limit your inquiry to a maximum of 5 questions.
         -   **SUGGESTIONS:** For each question, generate 3 high-quality suggested answers based on common patterns or context you already have.
         -   **Example Topics:** Target users, goals, features, etc
-        *   **General Guidelines:**
-            *   **1. Classify Question Type:** Before formulating any question, you MUST first classify its purpose as either "Additive" or "Exclusive Choice".
-                *   Use **Additive** for brainstorming and defining scope (e.g., users, goals, features, project guidelines). These questions allow for multiple answers.
-                *   Use **Exclusive Choice** for foundational, singular commitments (e.g., selecting a primary technology, a specific workflow rule). These questions require a single answer.
+        *   **General Guidelines (AskUserQuestion Format):**
+            *   **1. Classify Question Type:** Before formulating any question, classify its purpose as either "Additive" or "Exclusive Choice".
+                *   Use **Additive** (`multiSelect: true`) for brainstorming and defining scope (e.g., users, goals, features). These questions allow multiple answers.
+                *   Use **Exclusive Choice** (`multiSelect: false`) for foundational, singular commitments (e.g., selecting a primary technology). These questions require a single answer.
 
-            *   **2. Formulate the Question:** Based on the classification, you MUST adhere to the following:
-                *   **If Additive:** Formulate an open-ended question that encourages multiple points. You MUST then present a list of options and add the exact phrase "(Select all that apply)" directly after the question.
-                *   **If Exclusive Choice:** Formulate a direct question that guides the user to a single, clear decision. You MUST NOT add "(Select all that apply)".
+            *   **2. Use AskUserQuestion Tool:** All questions MUST be asked using the `AskUserQuestion` tool with:
+                *   **header:** Max 12 characters (e.g., "Users", "Goals", "Features")
+                *   **question:** Clear question text ending with "?"
+                *   **multiSelect:** `true` for Additive, `false` for Exclusive Choice
+                *   **options:** 2-4 options, each with:
+                    - **label:** 1-5 words (place recommended option FIRST with "(Recommended)" suffix)
+                    - **description:** Brief explanation of what this option means
+                *   Do NOT include "Type your own answer" - the system provides "Other" automatically
+                *   Include one option for "Autogenerate" to allow skipping remaining questions
 
             *   **3. Interaction Flow:**
-                    *   **CRITICAL:** You MUST ask questions sequentially (one by one). Do not ask multiple questions in a single turn. Wait for the user's response after each question.
-                *   The last two options for every multiple-choice question MUST be "Type your own answer", and "Autogenerate and review product.md".
+                *   **CRITICAL:** Ask questions sequentially (one by one). Wait for user response before next question.
                 *   Confirm your understanding by summarizing before moving on.
-            - **Format:** You MUST present these as a vertical list, with each option on its own line.
-            - **Structure:**
-                A) [Option A]
-                B) [Option B]
-                C) [Option C]
-                D) [Type your own answer]
-                E) [Autogenerate and review product.md]
     -   **FOR EXISTING PROJECTS (BROWNFIELD):** Ask project context-aware questions based on the code analysis.
     -   **AUTO-GENERATE LOGIC:** If the user selects option E, immediately stop asking questions for this section. Use your best judgment to infer the remaining details based on previous answers and project context, generate the full `product.md` content, write it to the file, and proceed to the next section.
 3.  **Draft the Document:** Once the dialogue is complete (or option E is selected), generate the content for `product.md`. If option E was chosen, use your best judgment to infer the remaining details based on previous answers and project context. You are encouraged to expand on the gathered details to create a comprehensive document.
     -   **CRITICAL:** The source of truth for generation is **only the user's selected answer(s)**. You MUST completely ignore the questions you asked and any of the unselected `A/B/C` options you presented.
-        -   **Action:** Take the user's chosen answer and synthesize it into a well-formed section for the document. You are encouraged to expand on the user's choice to create a comprehensive and polished output. DO NOT include the conversational options (A, B, C, D, E) in the final file.
+        -   **Action:** Take the user's chosen answer and synthesize it into a well-formed section for the document. You are encouraged to expand on the user's choice to create a comprehensive and polished output. DO NOT include the question options in the final file.
 4.  **User Confirmation Loop:** Present the drafted content to the user for review and begin the confirmation loop.
-    > "I've drafted the product guide. Please review the following:"
-    >
-    > ```markdown
-    > [Drafted product.md content here]
-    > ```
-    >
-    > "What would you like to do next?
-    > A) **Approve:** The document is correct and we can proceed.
-    > B) **Suggest Changes:** Tell me what to modify.
-    >
-    > You can always edit the generated file with your favorite external editor after this step.
-    > Please respond with A or B."
+    - Display the drafted content in a markdown code block
+    - Use the `AskUserQuestion` tool with:
+        - **header:** "Review"
+        - **question:** "Does this product guide meet your expectations?"
+        - **multiSelect:** false
+        - **options:**
+            1. label: "Approve (Recommended)", description: "Document is correct, proceed to next step"
+            2. label: "Suggest changes", description: "Tell me what to modify"
     - **Loop:** Based on user response, either apply changes and re-present the document, or break the loop on approval.
+    - Note: User can always edit the file externally after this step.
 5.  **Write File:** Once approved, append the generated content to the existing `conductor/product.md` file, preserving the `# Initial Concept` section.
 6.  **Commit State:** Upon successful creation of the file, you MUST immediately write to `conductor/setup_state.json` with the exact content:
     `{"last_successful_step": "2.1_product_guide"}`
@@ -218,45 +215,39 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
     -   **CONSTRAINT:** Limit your inquiry to a maximum of 5 questions.
     -   **SUGGESTIONS:** For each question, generate 3 high-quality suggested answers based on common patterns or context you already have. Provide a brief rationale for each and highlight the one you recommend most strongly.
     -   **Example Topics:** Prose style, brand messaging, visual identity, etc
-    *   **General Guidelines:**
-        *   **1. Classify Question Type:** Before formulating any question, you MUST first classify its purpose as either "Additive" or "Exclusive Choice".
-            *   Use **Additive** for brainstorming and defining scope (e.g., users, goals, features, project guidelines). These questions allow for multiple answers.
-            *   Use **Exclusive Choice** for foundational, singular commitments (e.g., selecting a primary technology, a specific workflow rule). These questions require a single answer.
+    *   **General Guidelines (AskUserQuestion Format):**
+        *   **1. Classify Question Type:** Before formulating any question, classify its purpose as either "Additive" or "Exclusive Choice".
+            *   Use **Additive** (`multiSelect: true`) for brainstorming and defining scope (e.g., prose style, messaging). These questions allow multiple answers.
+            *   Use **Exclusive Choice** (`multiSelect: false`) for foundational, singular commitments. These questions require a single answer.
 
-        *   **2. Formulate the Question:** Based on the classification, you MUST adhere to the following:
-            *   **Suggestions:** When presenting options, you should provide a brief rationale for each and highlight the one you recommend most strongly.
-            *   **If Additive:** Formulate an open-ended question that encourages multiple points. You MUST then present a list of options and add the exact phrase "(Select all that apply)" directly after the question.
-            *   **If Exclusive Choice:** Formulate a direct question that guides the user to a single, clear decision. You MUST NOT add "(Select all that apply)".
+        *   **2. Use AskUserQuestion Tool:** All questions MUST be asked using the `AskUserQuestion` tool with:
+            *   **header:** Max 12 characters (e.g., "Tone", "Brand", "Style")
+            *   **question:** Clear question text ending with "?"
+            *   **multiSelect:** `true` for Additive, `false` for Exclusive Choice
+            *   **options:** 2-4 options, each with:
+                - **label:** 1-5 words (place recommended option FIRST with "(Recommended)" suffix)
+                - **description:** Brief rationale for the option
+            *   Do NOT include "Type your own answer" - the system provides "Other" automatically
+            *   Include one option for "Autogenerate" to allow skipping remaining questions
 
         *   **3. Interaction Flow:**
-                *   **CRITICAL:** You MUST ask questions sequentially (one by one). Do not ask multiple questions in a single turn. Wait for the user's response after each question.
-            *   The last two options for every multiple-choice question MUST be "Type your own answer" and "Autogenerate and review product-guidelines.md".
+            *   **CRITICAL:** Ask questions sequentially (one by one). Wait for user response before next question.
             *   Confirm your understanding by summarizing before moving on.
-        - **Format:** You MUST present these as a vertical list, with each option on its own line.
-        - **Structure:**
-            A) [Option A]
-            B) [Option B]
-            C) [Option C]
-            D) [Type your own answer]
-            E) [Autogenerate and review product-guidelines.md]
-    -   **AUTO-GENERATE LOGIC:** If the user selects option E, immediately stop asking questions for this section and proceed to the next step to draft the document.
+    -   **AUTO-GENERATE LOGIC:** If the user selects the autogenerate option, immediately stop asking questions and proceed to draft the document.
 3.  **Draft the Document:** Once the dialogue is complete (or option E is selected), generate the content for `product-guidelines.md`. If option E was chosen, use your best judgment to infer the remaining details based on previous answers and project context. You are encouraged to expand on the gathered details to create a comprehensive document.
      **CRITICAL:** The source of truth for generation is **only the user's selected answer(s)**. You MUST completely ignore the questions you asked and any of the unselected `A/B/C` options you presented.
-    -   **Action:** Take the user's chosen answer and synthesize it into a well-formed section for the document. You are encouraged to expand on the user's choice to create a comprehensive and polished output. DO NOT include the conversational options (A, B, C, D, E) in the final file.
+    -   **Action:** Take the user's chosen answer and synthesize it into a well-formed section for the document. You are encouraged to expand on the user's choice to create a comprehensive and polished output. DO NOT include the question options in the final file.
 4.  **User Confirmation Loop:** Present the drafted content to the user for review and begin the confirmation loop.
-    > "I've drafted the product guidelines. Please review the following:"
-    >
-    > ```markdown
-    > [Drafted product-guidelines.md content here]
-    > ```
-    >
-    > "What would you like to do next?
-    > A) **Approve:** The document is correct and we can proceed.
-    > B) **Suggest Changes:** Tell me what to modify.
-    >
-    > You can always edit the generated file with your favorite external editor after this step.
-    > Please respond with A or B."
+    - Display the drafted content in a markdown code block
+    - Use the `AskUserQuestion` tool with:
+        - **header:** "Review"
+        - **question:** "Does this product guidelines document meet your expectations?"
+        - **multiSelect:** false
+        - **options:**
+            1. label: "Approve (Recommended)", description: "Document is correct, proceed to next step"
+            2. label: "Suggest changes", description: "Tell me what to modify"
     - **Loop:** Based on user response, either apply changes and re-present the document, or break the loop on approval.
+    - Note: User can always edit the file externally after this step.
 5.  **Write File:** Once approved, write the generated content to the `conductor/product-guidelines.md` file.
 6.  **Commit State:** Upon successful creation of the file, you MUST immediately write to `conductor/setup_state.json` with the exact content:
     `{"last_successful_step": "2.2_product_guidelines"}`
@@ -268,52 +259,50 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
     -   **CONSTRAINT:** Limit your inquiry to a maximum of 5 questions.
     -   **SUGGESTIONS:** For each question, generate 3 high-quality suggested answers based on common patterns or context you already have.
     -   **Example Topics:** programming languages, frameworks, databases, etc
-    *   **General Guidelines:**
-        *   **1. Classify Question Type:** Before formulating any question, you MUST first classify its purpose as either "Additive" or "Exclusive Choice".
-            *   Use **Additive** for brainstorming and defining scope (e.g., users, goals, features, project guidelines). These questions allow for multiple answers.
-            *   Use **Exclusive Choice** for foundational, singular commitments (e.g., selecting a primary technology, a specific workflow rule). These questions require a single answer.
+    *   **General Guidelines (AskUserQuestion Format):**
+        *   **1. Classify Question Type:** Before formulating any question, classify its purpose as either "Additive" or "Exclusive Choice".
+            *   Use **Additive** (`multiSelect: true`) for selecting multiple technologies (e.g., frameworks, libraries).
+            *   Use **Exclusive Choice** (`multiSelect: false`) for foundational choices (e.g., primary language, database type).
 
-        *   **2. Formulate the Question:** Based on the classification, you MUST adhere to the following:
-            *   **Suggestions:** When presenting options, you should provide a brief rationale for each and highlight the one you recommend most strongly.
-            *   **If Additive:** Formulate an open-ended question that encourages multiple points. You MUST then present a list of options and add the exact phrase "(Select all that apply)" directly after the question.
-            *   **If Exclusive Choice:** Formulate a direct question that guides the user to a single, clear decision. You MUST NOT add "(Select all that apply)".
+        *   **2. Use AskUserQuestion Tool:** All questions MUST be asked using the `AskUserQuestion` tool with:
+            *   **header:** Max 12 characters (e.g., "Language", "Framework", "Database")
+            *   **question:** Clear question text ending with "?"
+            *   **multiSelect:** `true` for Additive, `false` for Exclusive Choice
+            *   **options:** 2-4 options, each with:
+                - **label:** 1-5 words (place recommended option FIRST with "(Recommended)" suffix)
+                - **description:** Brief rationale for the option
+            *   Do NOT include "Type your own answer" - the system provides "Other" automatically
+            *   Include one option for "Autogenerate" to allow skipping remaining questions
 
         *   **3. Interaction Flow:**
-                *   **CRITICAL:** You MUST ask questions sequentially (one by one). Do not ask multiple questions in a single turn. Wait for the user's response after each question.
-            *   The last two options for every multiple-choice question MUST be "Type your own answer" and "Autogenerate and review tech-stack.md".
+            *   **CRITICAL:** Ask questions sequentially (one by one). Wait for user response before next question.
             *   Confirm your understanding by summarizing before moving on.
-        - **Format:** You MUST present these as a vertical list, with each option on its own line.
-        - **Structure:**
-            A) [Option A]
-            B) [Option B]
-            C) [Option C]
-            D) [Type your own answer]
-            E) [Autogenerate and review tech-stack.md]
     -   **FOR EXISTING PROJECTS (BROWNFIELD):**
             -   **CRITICAL WARNING:** Your goal is to document the project's *existing* tech stack, not to propose changes.
-            -   **State the Inferred Stack:** Based on the code analysis, you MUST state the technology stack that you have inferred. Do not present any other options.
-            -   **Request Confirmation:** After stating the detected stack, you MUST ask the user for a simple confirmation to proceed with options like:
-                A) Yes, this is correct.
-                B) No, I need to provide the correct tech stack.
-            -   **Handle Disagreement:** If the user disputes the suggestion, acknowledge their input and allow them to provide the correct technology stack manually as a last resort.
+            -   **State the Inferred Stack:** Based on the code analysis, state the technology stack that you have inferred.
+            -   **Request Confirmation:** Use the `AskUserQuestion` tool with:
+                - **header:** "Tech Stack"
+                - **question:** "Is this inferred tech stack correct?"
+                - **multiSelect:** false
+                - **options:**
+                    1. label: "Yes (Recommended)", description: "The detected stack is accurate"
+                    2. label: "No, corrections needed", description: "I need to provide the correct tech stack"
+            -   **Handle Disagreement:** If the user disputes, allow them to provide the correct technology stack.
     -   **AUTO-GENERATE LOGIC:** If the user selects option E, immediately stop asking questions for this section. Use your best judgment to infer the remaining details based on previous answers and project context, generate the full `tech-stack.md` content, write it to the file, and proceed to the next section.
 3.  **Draft the Document:** Once the dialogue is complete (or option E is selected), generate the content for `tech-stack.md`. If option E was chosen, use your best judgment to infer the remaining details based on previous answers and project context. You are encouraged to expand on the gathered details to create a comprehensive document.
     -   **CRITICAL:** The source of truth for generation is **only the user's selected answer(s)**. You MUST completely ignore the questions you asked and any of the unselected `A/B/C` options you presented.
-    -   **Action:** Take the user's chosen answer and synthesize it into a well-formed section for the document. You are encouraged to expand on the user's choice to create a comprehensive and polished output. DO NOT include the conversational options (A, B, C, D, E) in the final file.
+    -   **Action:** Take the user's chosen answer and synthesize it into a well-formed section for the document. You are encouraged to expand on the user's choice to create a comprehensive and polished output. DO NOT include the question options in the final file.
 4.  **User Confirmation Loop:** Present the drafted content to the user for review and begin the confirmation loop.
-    > "I've drafted the tech stack document. Please review the following:"
-    >
-    > ```markdown
-    > [Drafted tech-stack.md content here]
-    > ```
-    >
-    > "What would you like to do next?
-    > A) **Approve:** The document is correct and we can proceed.
-    > B) **Suggest Changes:** Tell me what to modify.
-    >
-    > You can always edit the generated file with your favorite external editor after this step.
-    > Please respond with A or B."
+    - Display the drafted content in a markdown code block
+    - Use the `AskUserQuestion` tool with:
+        - **header:** "Review"
+        - **question:** "Does this tech stack document meet your expectations?"
+        - **multiSelect:** false
+        - **options:**
+            1. label: "Approve (Recommended)", description: "Document is correct, proceed to next step"
+            2. label: "Suggest changes", description: "Tell me what to modify"
     - **Loop:** Based on user response, either apply changes and re-present the document, or break the loop on approval.
+    - Note: User can always edit the file externally after this step.
 6.  **Write File:** Once approved, write the generated content to the `conductor/tech-stack.md` file.
 7.  **Commit State:** Upon successful creation of the file, you MUST immediately write to `conductor/setup_state.json` with the exact content:
     `{"last_successful_step": "2.3_tech_stack"}`
@@ -325,18 +314,25 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
     -   List the available style guides by running `ls ${CLAUDE_PLUGIN_ROOT}/templates/code_styleguides/`.
     -   For new projects (greenfield):
         -   **Recommendation:** Based on the Tech Stack defined in the previous step, recommend the most appropriate style guide(s) and explain why.
-        -   Ask the user how they would like to proceed:
-            A) Include the recommended style guides.
-            B) Edit the selected set.
-        -   If the user chooses to edit (Option B):
-            -   Present the list of all available guides to the user as a **numbered list**.
-            -   Ask the user which guide(s) they would like to copy.
+        -   Use the `AskUserQuestion` tool with:
+            - **header:** "Styleguides"
+            - **question:** "How would you like to proceed with code style guides?"
+            - **multiSelect:** false
+            - **options:**
+                1. label: "Use recommended (Recommended)", description: "Include the suggested style guides for your tech stack"
+                2. label: "Customize selection", description: "Choose which guides to include"
+        -   If the user chooses to customize:
+            -   Present the list of all available guides
+            -   Use `AskUserQuestion` with `multiSelect: true` to let user select guides
     -   For existing projects (brownfield):
-        -   **Announce Selection:** Inform the user: "Based on the inferred tech stack, I will copy the following code style guides: <list of inferred guides>."
-        -   **Ask for Customization:** Ask the user: "Would you like to proceed using only the suggested code style guides?"
-            - Ask the user for a simple confirmation to proceed with options like:
-                    A) Yes, I want to proceed with the suggested code style guides.
-                    B) No, I want to add more code style guides.
+        -   **Announce Selection:** Inform the user which code style guides will be copied based on the inferred tech stack.
+        -   Use the `AskUserQuestion` tool with:
+            - **header:** "Styleguides"
+            - **question:** "Proceed with the suggested code style guides?"
+            - **multiSelect:** false
+            - **options:**
+                1. label: "Yes (Recommended)", description: "Use suggested guides for detected tech stack"
+                2. label: "Add more guides", description: "I want to include additional style guides"
     -   **Action:** Construct and execute a command to create the directory and copy all selected files. For example: `mkdir -p conductor/code_styleguides && cp ${CLAUDE_PLUGIN_ROOT}/templates/code_styleguides/python.md ${CLAUDE_PLUGIN_ROOT}/templates/code_styleguides/javascript.md conductor/code_styleguides/`
     -   **Commit State:** Upon successful completion of the copy command, you MUST immediately write to `conductor/setup_state.json` with the exact content:
         `{"last_successful_step": "2.4_code_styleguides"}`
@@ -345,23 +341,36 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
 1.  **Copy Initial Workflow:**
     -   Copy `${CLAUDE_PLUGIN_ROOT}/templates/workflow.md` to `conductor/workflow.md`.
 2.  **Customize Workflow:**
-    -   Ask the user: "Do you want to use the default workflow or customize it?"
-        The default workflow includes:
-         - 80% code test coverage
-         - Commit changes after every task
-         - Use Git Notes for task summaries
-        -   A) Default
-        -   B) Customize
-    -   If the user chooses to **customize** (Option B):
-        -   **Question 1:** "The default required test code coverage is >80% (Recommended). Do you want to change this percentage?"
-            -   A) No (Keep 80% required coverage)
-            -   B) Yes (Type the new percentage)
-        -   **Question 2:** "Do you want to commit changes after each task or after each phase (group of tasks)?"
-            -   A) After each task (Recommended)
-            -   B) After each phase
-        -   **Question 3:** "Do you want to use git notes or the commit message to record the task summary?"
-            -   A) Git Notes (Recommended)
-            -   B) Commit Message
+    -   Explain that the default workflow includes: 80% code test coverage, commit changes after every task, use Git Notes for task summaries.
+    -   Use the `AskUserQuestion` tool with:
+        - **header:** "Workflow"
+        - **question:** "Use the default workflow or customize it?"
+        - **multiSelect:** false
+        - **options:**
+            1. label: "Default (Recommended)", description: "Use standard workflow settings"
+            2. label: "Customize", description: "Modify coverage, commit strategy, or summary method"
+    -   If the user chooses to **customize**:
+        -   **Question 1:** Use `AskUserQuestion` with:
+            - **header:** "Coverage"
+            - **question:** "Keep the default 80% test coverage requirement?"
+            - **multiSelect:** false
+            - **options:**
+                1. label: "Keep 80% (Recommended)", description: "Maintain standard coverage threshold"
+                2. label: "Change percentage", description: "Specify a different coverage requirement"
+        -   **Question 2:** Use `AskUserQuestion` with:
+            - **header:** "Commits"
+            - **question:** "When should changes be committed?"
+            - **multiSelect:** false
+            - **options:**
+                1. label: "After each task (Recommended)", description: "Commit after completing each task"
+                2. label: "After each phase", description: "Commit after completing a group of tasks"
+        -   **Question 3:** Use `AskUserQuestion` with:
+            - **header:** "Summaries"
+            - **question:** "How should task summaries be recorded?"
+            - **multiSelect:** false
+            - **options:**
+                1. label: "Git Notes (Recommended)", description: "Attach summaries as git notes"
+                2. label: "Commit message", description: "Include summaries in commit messages"
         -   **Action:** Update `conductor/workflow.md` based on the user's responses.
         -   **Commit State:** After the `workflow.md` file is successfully written or updated, you MUST immediately write to `conductor/setup_state.json` with the exact content:
             `{"last_successful_step": "2.5_workflow"}`
@@ -403,28 +412,26 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
 3.  **Ask Questions Sequentially:** Ask one question at a time. Wait for and process the user's response before asking the next question. Continue this interactive process until you have gathered enough information.
     -   **CONSTRAINT** Limit your inquiries to a maximum of 5 questions.
     -   **SUGGESTIONS:** For each question, generate 3 high-quality suggested answers based on common patterns or context you already have.
-    *   **General Guidelines:**
-        *   **1. Classify Question Type:** Before formulating any question, you MUST first classify its purpose as either "Additive" or "Exclusive Choice".
-            *   Use **Additive** for brainstorming and defining scope (e.g., users, goals, features, project guidelines). These questions allow for multiple answers.
-            *   Use **Exclusive Choice** for foundational, singular commitments (e.g., selecting a primary technology, a specific workflow rule). These questions require a single answer.
+    *   **General Guidelines (AskUserQuestion Format):**
+        *   **1. Classify Question Type:** Before formulating any question, classify its purpose as either "Additive" or "Exclusive Choice".
+            *   Use **Additive** (`multiSelect: true`) for brainstorming and defining scope (e.g., user stories, features).
+            *   Use **Exclusive Choice** (`multiSelect: false`) for foundational, singular commitments.
 
-        *   **2. Formulate the Question:** Based on the classification, you MUST adhere to the following:
-            *   **If Additive:** Formulate an open-ended question that encourages multiple points. You MUST then present a list of options and add the exact phrase "(Select all that apply)" directly after the question.
-            *   **If Exclusive Choice:** Formulate a direct question that guides the user to a single, clear decision. You MUST NOT add "(Select all that apply)".
+        *   **2. Use AskUserQuestion Tool:** All questions MUST be asked using the `AskUserQuestion` tool with:
+            *   **header:** Max 12 characters (e.g., "User Story", "Features", "Priority")
+            *   **question:** Clear question text ending with "?"
+            *   **multiSelect:** `true` for Additive, `false` for Exclusive Choice
+            *   **options:** 2-4 options, each with:
+                - **label:** 1-5 words (place recommended option FIRST with "(Recommended)" suffix)
+                - **description:** Brief explanation of what this option means
+            *   Do NOT include "Type your own answer" - the system provides "Other" automatically
+            *   Include one option for "Autogenerate" to allow skipping remaining questions
 
         *   **3. Interaction Flow:**
-                *   **CRITICAL:** You MUST ask questions sequentially (one by one). Do not ask multiple questions in a single turn. Wait for the user's response after each question.
-            *   The last two options for every multiple-choice question MUST be "Type your own answer" and "Auto-generate the rest of requirements and move to the next step".
+            *   **CRITICAL:** Ask questions sequentially (one by one). Wait for user response before next question.
             *   Confirm your understanding by summarizing before moving on.
-        - **Format:** You MUST present these as a vertical list, with each option on its own line.
-        - **Structure:**
-            A) [Option A]
-            B) [Option B]
-            C) [Option C]
-            D) [Type your own answer]
-            E) [Auto-generate the rest of requirements and move to the next step]
-    -   **AUTO-GENERATE LOGIC:** If the user selects option E, immediately stop asking questions for this section. Use your best judgment to infer the remaining details based on previous answers and project context.
--   **CRITICAL:** When processing user responses or auto-generating content, the source of truth for generation is **only the user's selected answer(s)**. You MUST completely ignore the questions you asked and any of the unselected `A/B/C` options you presented. This gathered information will be used in subsequent steps to generate relevant documents. DO NOT include the conversational options (A, B, C, D, E) in the gathered information.
+    -   **AUTO-GENERATE LOGIC:** If the user selects the autogenerate option, immediately stop asking questions and infer remaining details from context.
+-   **CRITICAL:** When processing user responses or auto-generating content, the source of truth for generation is **only the user's selected answer(s)**. You MUST completely ignore the questions you asked and any unselected options you presented. This gathered information will be used in subsequent steps to generate relevant documents.
 4.  **Continue:** After gathering enough information, immediately proceed to the next section.
 
 ### 3.2 Propose a Single Initial Track (Automated + Approval)
@@ -440,7 +447,14 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
         To create the first track of this project, I suggest the following track:
         - Create user authentication flow for user sign in.
         ```
-3.  **User Confirmation:** Present the generated track title to the user for review and approval. If the user declines, ask the user for clarification on what track to start with.
+3.  **User Confirmation:** Present the generated track title to the user for review and use the `AskUserQuestion` tool with:
+    - **header:** "Track"
+    - **question:** "Do you approve this initial track?"
+    - **multiSelect:** false
+    - **options:**
+        1. label: "Approve (Recommended)", description: "Create this track and generate artifacts"
+        2. label: "Different track", description: "I'd like to specify a different track"
+    - If the user declines, ask for clarification on what track to start with.
 
 ### 3.3 Convert the Initial Track into Artifacts (Automated)
 1.  **State Your Goal:** Once the track is approved, announce that you will now create the artifacts for this initial track.
