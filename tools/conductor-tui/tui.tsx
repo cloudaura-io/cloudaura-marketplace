@@ -155,14 +155,16 @@ function Footer({ text }: { text: string }) {
 // === App ===
 
 function App({ basePath }: { basePath: string }) {
-  const [tracks, setTracks] = useState<Track[]>([]);
+  const [allTracks, setAllTracks] = useState<Track[]>([]);
+  const [showArchived, setShowArchived] = useState(false);
 
   useEffect(() => {
-    const load = () => { discoverTracks(basePath).then(setTracks); };
+    const load = () => { discoverTracks(basePath).then(setAllTracks); };
     load();
     const id = setInterval(load, 2000);
     return () => clearInterval(id);
   }, [basePath]);
+  const tracks = showArchived ? allTracks : allTracks.filter((t) => t.source !== "archived");
   const { exit } = useApp();
   const [stack, setStack] = useState<Screen[]>([{ type: "tracks", cursor: 0 }]);
   const screen = stack[stack.length - 1]!;
@@ -226,6 +228,10 @@ function App({ basePath }: { basePath: string }) {
     }
     if (key.return) handleEnter();
     if (key.escape) pop();
+    if (input === "a" && screen.type === "tracks") {
+      setShowArchived((prev) => !prev);
+      setStack([{ type: "tracks", cursor: 0 }]);
+    }
     if (input === "q" && screen.type === "tracks") push({ type: "quit" });
   });
 
@@ -274,7 +280,7 @@ function App({ basePath }: { basePath: string }) {
             </Text>
           );
         })}
-        <Footer text="[↑↓] Navigate  [Enter] View phases  [q] Quit" />
+        <Footer text={`[↑↓] Navigate  [Enter] View phases  [a] ${showArchived ? "Hide" : "Show"} archived  [q] Quit`} />
       </Box>
     );
   }
