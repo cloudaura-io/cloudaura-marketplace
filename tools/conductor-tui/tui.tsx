@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { render, Box, Text, useInput, useApp } from "ink";
 import { readdir, readFile } from "fs/promises";
 import { join } from "path";
@@ -150,7 +150,15 @@ function Footer({ text }: { text: string }) {
 
 // === App ===
 
-function App({ tracks }: { tracks: Track[] }) {
+function App({ basePath }: { basePath: string }) {
+  const [tracks, setTracks] = useState<Track[]>([]);
+
+  useEffect(() => {
+    const load = () => { discoverTracks(basePath).then(setTracks); };
+    load();
+    const id = setInterval(load, 2000);
+    return () => clearInterval(id);
+  }, [basePath]);
   const { exit } = useApp();
   const [stack, setStack] = useState<Screen[]>([{ type: "tracks", cursor: 0 }]);
   const screen = stack[stack.length - 1]!;
@@ -382,6 +390,4 @@ if (process.argv.includes("--version") || process.argv.includes("-v")) {
   process.exit(0);
 }
 
-const basePath = process.cwd();
-const tracks = await discoverTracks(basePath);
-render(<App tracks={tracks} />);
+render(<App basePath={process.cwd()} />);
