@@ -1,7 +1,6 @@
 on:
-  push:
-    tags:
-      - "conductor-tui-v*"
+  release:
+    types: [published]
 
 permissions:
   contents: write
@@ -10,6 +9,7 @@ name: release-conductor-tui
 
 jobs:
   build:
+    if: startsWith(github.event.release.tag_name, 'conductor-tui-v')
     strategy:
       fail-fast: false
       matrix:
@@ -37,6 +37,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload ${{ github.ref_name }} \
+          gh release upload ${{ github.event.release.tag_name }} \
             tools/conductor-tui/dist/${{ matrix.artifact }} \
             --repo ${{ github.repository }}
