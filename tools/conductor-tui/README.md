@@ -4,10 +4,10 @@ Terminal UI for browsing [Conductor](../../plugins/conductor/) tracks, phases, a
 
 ## Install
 
-**Pre-built binary** (Linux/Windows):
+**Pre-built binary** (Linux/macOS/Windows):
 
 ```bash
-# Linux/Unix
+# Linux/macOS
 curl -fsSL https://raw.githubusercontent.com/cloudaura-io/cloudaura-marketplace/main/tools/conductor-tui/install.sh | sh
 ```
 ```powershell
