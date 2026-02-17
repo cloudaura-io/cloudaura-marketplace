@@ -1,0 +1,30 @@
+on:
+  push:
+    tags:
+      - "conductor-v*"
+
+permissions:
+  contents: write
+
+name: release-plugins
+
+jobs:
+  conductor:
+    if: startsWith(github.ref_name, 'conductor-v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Create archive
+        working-directory: plugins/conductor
+        run: |
+          tar -czvf ../../conductor-${{ github.ref_name }}.tar.gz \
+            --exclude='.git' \
+            .
+
+      - name: Upload to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ github.ref_name }} \
+            conductor-${{ github.ref_name }}.tar.gz

@@ -15,29 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: googleapis/release-please-action@v4
-        id: release
         with:
           target-branch: ${{ github.ref_name }}
           token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Checkout code
-        if: ${{ steps.release.outputs.releases_created }}
-        uses: actions/checkout@v4
-
-      # Conductor plugin release
-      - name: Create conductor archive
-        if: ${{ steps.release.outputs['conductor--release_created'] }}
-        working-directory: plugins/conductor
-        run: |
-          tar -czvf ../../conductor-${{ steps.release.outputs['conductor--tag_name'] }}.tar.gz \
-            --exclude='.git' \
-            .
-
-      - name: Upload conductor archive
-        if: ${{ steps.release.outputs['conductor--release_created'] }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release upload \
-            ${{ steps.release.outputs['conductor--tag_name'] }} \
-            conductor-${{ steps.release.outputs['conductor--tag_name'] }}.tar.gz
