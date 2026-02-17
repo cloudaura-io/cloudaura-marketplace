@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.0](https://github.com/cloudaura-io/cloudaura-marketplace/compare/conductor-v0.3.2...conductor-v0.4.0) (2026-02-13)
+
+
+### Features
+
+* **conductor:** migrate skills to AskUserQuestion format ([8e12ca2](https://github.com/cloudaura-io/cloudaura-marketplace/commit/8e12ca23dd8a2c6c280c3e54b6f83271f37df09f))
+
+
+### Bug Fixes
+
+* **conductor:** update remaining option E references to autogenerate ([ef24403](https://github.com/cloudaura-io/cloudaura-marketplace/commit/ef244036852cebc2712902fc8e8ad1ccec1ec03e))
+
 ## [0.3.2](https://github.com/cloudaura-io/cloudaura-marketplace/compare/conductor-v0.3.1...conductor-v0.3.2) (2026-02-09)
 
 
