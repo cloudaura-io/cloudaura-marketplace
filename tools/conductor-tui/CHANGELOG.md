@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/cloudaura-io/cloudaura-marketplace/compare/conductor-tui-v0.2.2...conductor-tui-v0.3.0) (2026-02-17)
+
+
+### Features
+
+* **conductor-tui:** hide archived tracks by default, toggle with [a] ([1a5a7d0](https://github.com/cloudaura-io/cloudaura-marketplace/commit/1a5a7d06bdd63d0b8b9662660111f32fd4a7fce9))
+
 ## [0.2.2](https://github.com/cloudaura-io/cloudaura-marketplace/compare/conductor-tui-v0.2.1...conductor-tui-v0.2.2) (2026-02-17)
 
 

@@ -1,4 +1,4 @@
 {
   "plugins/conductor": "0.4.0",
-  "tools/conductor-tui": "0.2.2"
+  "tools/conductor-tui": "0.3.0"
 }
