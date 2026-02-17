@@ -1,7 +1,6 @@
 on:
-  push:
-    tags:
-      - "conductor-v*"
+  release:
+    types: [published]
 
 permissions:
   contents: write
@@ -10,7 +9,7 @@ name: release-plugins
 
 jobs:
   conductor:
-    if: startsWith(github.ref_name, 'conductor-v')
+    if: startsWith(github.event.release.tag_name, 'conductor-v') && !contains(github.event.release.tag_name, 'conductor-tui')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -18,7 +17,7 @@ jobs:
       - name: Create archive
         working-directory: plugins/conductor
         run: |
-          tar -czvf ../../conductor-${{ github.ref_name }}.tar.gz \
+          tar -czvf ../../conductor-${{ github.event.release.tag_name }}.tar.gz \
             --exclude='.git' \
             .
 
@@ -26,5 +25,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload ${{ github.ref_name }} \
-            conductor-${{ github.ref_name }}.tar.gz
+          gh release upload ${{ github.event.release.tag_name }} \
+            conductor-${{ github.event.release.tag_name }}.tar.gz
