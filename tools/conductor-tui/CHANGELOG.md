@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/cloudaura-io/cloudaura-marketplace/compare/conductor-tui-v0.2.1...conductor-tui-v0.2.2) (2026-02-17)
+
+
+### Bug Fixes
+
+* **conductor-tui:** add package description ([ebb3bc2](https://github.com/cloudaura-io/cloudaura-marketplace/commit/ebb3bc2d330a7940c5d3697e703945b95b769b18))
+
 ## [0.2.1](https://github.com/cloudaura-io/cloudaura-marketplace/compare/conductor-tui-v0.2.0...conductor-tui-v0.2.1) (2026-02-17)
 
 
