@@ -1,6 +1,7 @@
 {
   "name": "conductor-tui",
   "version": "0.2.1",
+  "description": "Terminal UI for browsing Conductor tracks, phases, and tasks",
   "private": true,
   "devDependencies": {
     "@types/bun": "latest",
