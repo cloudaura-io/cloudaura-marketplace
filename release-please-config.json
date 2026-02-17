@@ -12,6 +12,18 @@
           "jsonpath": "$.version"
         }
       ]
+    },
+    "tools/conductor-tui": {
+      "release-type": "simple",
+      "package-name": "conductor-tui",
+      "component": "conductor-tui",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "package.json",
+          "jsonpath": "$.version"
+        }
+      ]
     }
   }
 }
