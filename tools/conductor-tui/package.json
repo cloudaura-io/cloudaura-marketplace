@@ -1,0 +1,17 @@
+{
+  "name": "conductor-tui",
+  "version": "0.1.0",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/react": "^19.2.14",
+    "react-devtools-core": "^7.0.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "ink": "^6.7.0",
+    "react": "^19.2.4"
+  }
+}

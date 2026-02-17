@@ -17,6 +17,12 @@ claude plugin marketplace add cloudaura-io/cloudaura-marketplace
 |--------|-------------|
 | [conductor](plugins/conductor/) | Context-driven development framework. Measure twice, code once.<br>Ported from [gemini-cli-extensions/conductor](https://github.com/gemini-cli-extensions/conductor). |
 
+## Tools
+
+| Tool | Description |
+|------|-------------|
+| [conductor-tui](tools/conductor-tui/) | Terminal UI for browsing Conductor tracks, phases, and tasks. |
+
 ## Development
 
 See [DEVELOPMENT.md](DEVELOPMENT.md) for local testing instructions.
