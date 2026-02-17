@@ -38,12 +38,16 @@ type Screen =
   | { type: "detail"; trackIdx: number; phaseIdx: number; taskIdx: number; scroll: number }
   | { type: "quit" };
 
-type StatusColor = "green" | "yellow" | "cyan" | undefined;
+type StatusColor = "green" | "yellow" | "cyan" | "magenta" | "blue" | "red" | "gray" | undefined;
 
 function statusColor(s: string): StatusColor {
   if (s === "completed" || s === "done") return "green";
   if (s === "in_progress" || s === "doing") return "yellow";
   if (s === "pending" || s === "todo") return "cyan";
+  if (s === "new") return "magenta";
+  if (s === "review") return "blue";
+  if (s === "blocked") return "red";
+  if (s === "archived") return "gray";
   return undefined;
 }
 
