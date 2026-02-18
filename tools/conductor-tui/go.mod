@@ -1,4 +1,4 @@
-module github.com/cloudaura-io/conductor-claude-code/tools/conductor-tui
+module github.com/cloudaura-io/cloudaura-marketplace/tools/conductor-tui
 
 go 1.25.6
 

@@ -3,7 +3,7 @@ package util
 import (
 	"testing"
 
-	"github.com/cloudaura-io/conductor-claude-code/tools/conductor-tui/internal/data"
+	"github.com/cloudaura-io/cloudaura-marketplace/tools/conductor-tui/internal/data"
 )
 
 func TestTrunc(t *testing.T) {

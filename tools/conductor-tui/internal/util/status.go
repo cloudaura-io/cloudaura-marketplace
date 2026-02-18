@@ -1,6 +1,6 @@
 package util
 
-import "github.com/cloudaura-io/conductor-claude-code/tools/conductor-tui/internal/data"
+import "github.com/cloudaura-io/cloudaura-marketplace/tools/conductor-tui/internal/data"
 
 // StatusColor returns a color name for the given status string.
 func StatusColor(s string) string {

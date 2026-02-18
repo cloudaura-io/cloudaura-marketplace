@@ -3,7 +3,7 @@ package tui
 import (
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/cloudaura-io/conductor-claude-code/tools/conductor-tui/internal/data"
+	"github.com/cloudaura-io/cloudaura-marketplace/tools/conductor-tui/internal/data"
 )
 
 // HandleKey processes key messages and returns the updated model and command.

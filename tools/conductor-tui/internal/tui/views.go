@@ -6,7 +6,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/cloudaura-io/conductor-claude-code/tools/conductor-tui/internal/util"
+	"github.com/cloudaura-io/cloudaura-marketplace/tools/conductor-tui/internal/util"
 )
 
 // View renders the current screen.

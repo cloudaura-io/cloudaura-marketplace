@@ -6,7 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/cloudaura-io/conductor-claude-code/tools/conductor-tui/internal/tui"
+	"github.com/cloudaura-io/cloudaura-marketplace/tools/conductor-tui/internal/tui"
 )
 
 func main() {
