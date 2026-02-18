@@ -243,6 +243,102 @@ func TestParsePlan_TaskWithoutCommit(t *testing.T) {
 	}
 }
 
+// --- Track Discovery Tests ---
+
+func TestDiscoverTracks_AllTracks(t *testing.T) {
+	tracks := discoverTracks("testdata/discovery")
+
+	if len(tracks) != 3 {
+		t.Fatalf("got %d tracks, want 3", len(tracks))
+	}
+
+	// Active tracks should come first, sorted alphabetically
+	if tracks[0].TrackID != "bugfix-beta_20260102" {
+		t.Errorf("tracks[0].TrackID = %q, want %q", tracks[0].TrackID, "bugfix-beta_20260102")
+	}
+	if tracks[0].Source != "active" {
+		t.Errorf("tracks[0].Source = %q, want %q", tracks[0].Source, "active")
+	}
+
+	if tracks[1].TrackID != "feature-alpha_20260101" {
+		t.Errorf("tracks[1].TrackID = %q, want %q", tracks[1].TrackID, "feature-alpha_20260101")
+	}
+	if tracks[1].Source != "active" {
+		t.Errorf("tracks[1].Source = %q, want %q", tracks[1].Source, "active")
+	}
+
+	// Archived track should be last
+	if tracks[2].TrackID != "feature-gamma_20250601" {
+		t.Errorf("tracks[2].TrackID = %q, want %q", tracks[2].TrackID, "feature-gamma_20250601")
+	}
+	if tracks[2].Source != "archived" {
+		t.Errorf("tracks[2].Source = %q, want %q", tracks[2].Source, "archived")
+	}
+}
+
+func TestDiscoverTracks_ActiveWithPlan(t *testing.T) {
+	tracks := discoverTracks("testdata/discovery")
+
+	// feature-alpha has a plan.md with 1 phase and 2 tasks
+	var alpha Track
+	for _, tr := range tracks {
+		if tr.TrackID == "feature-alpha_20260101" {
+			alpha = tr
+			break
+		}
+	}
+	if len(alpha.Phases) != 1 {
+		t.Fatalf("alpha has %d phases, want 1", len(alpha.Phases))
+	}
+	if len(alpha.Phases[0].Tasks) != 2 {
+		t.Errorf("alpha phase 1 has %d tasks, want 2", len(alpha.Phases[0].Tasks))
+	}
+}
+
+func TestDiscoverTracks_MissingDirectory(t *testing.T) {
+	// Should handle missing base directory gracefully
+	tracks := discoverTracks("testdata/nonexistent")
+	if len(tracks) != 0 {
+		t.Errorf("got %d tracks, want 0 for missing directory", len(tracks))
+	}
+}
+
+func TestDiscoverTracks_SortOrder(t *testing.T) {
+	tracks := discoverTracks("testdata/discovery")
+
+	// Verify active tracks come before archived
+	foundArchived := false
+	for _, tr := range tracks {
+		if tr.Source == "archived" {
+			foundArchived = true
+		}
+		if foundArchived && tr.Source == "active" {
+			t.Error("found active track after archived track; sorting is broken")
+		}
+	}
+}
+
+func TestDiscoverTracks_FilterArchived(t *testing.T) {
+	allTracks := discoverTracks("testdata/discovery")
+
+	// Simulate filtering archived tracks (as done in TUI)
+	var active []Track
+	for _, tr := range allTracks {
+		if tr.Source != "archived" {
+			active = append(active, tr)
+		}
+	}
+
+	if len(active) != 2 {
+		t.Errorf("got %d active tracks, want 2", len(active))
+	}
+	for _, tr := range active {
+		if tr.Source == "archived" {
+			t.Error("found archived track after filtering")
+		}
+	}
+}
+
 // Placeholder to ensure testdata directory is accessible
 func TestTestdataDirectoryExists(t *testing.T) {
 	info, err := os.Stat("testdata")
