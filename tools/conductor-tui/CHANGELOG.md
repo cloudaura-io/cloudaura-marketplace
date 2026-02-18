@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/cloudaura-io/cloudaura-marketplace/compare/conductor-tui-v0.4.0...conductor-tui-v0.5.0) (2026-02-18)
+
+
+### Features
+
+* conductor tui go rewrite ([#18](https://github.com/cloudaura-io/cloudaura-marketplace/issues/18)) ([9970a64](https://github.com/cloudaura-io/cloudaura-marketplace/commit/9970a6470ffb1091a4f903ee23e094341dfe49d6))
+
 ## [0.4.0](https://github.com/cloudaura-io/cloudaura-marketplace/compare/conductor-tui-v0.3.0...conductor-tui-v0.4.0) (2026-02-18)
 
 
