@@ -19,7 +19,7 @@ targets=(
 for entry in "${targets[@]}"; do
   IFS=: read -r goos goarch outfile <<< "$entry"
   echo "Building ${goos}/${goarch}..."
-  GOOS="$goos" GOARCH="$goarch" go build -ldflags="-s -w" -o "$OUTDIR/$outfile" "$MODULE_DIR"
+  GOOS="$goos" GOARCH="$goarch" go build -ldflags="-s -w" -o "$OUTDIR/$outfile" "$MODULE_DIR/cmd/conductor-tui"
 done
 
 echo ""

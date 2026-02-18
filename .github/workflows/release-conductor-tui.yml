@@ -41,7 +41,7 @@ jobs:
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
-        run: go build -ldflags="-s -w" -o dist/${{ matrix.artifact }} .
+        run: go build -ldflags="-s -w" -o dist/${{ matrix.artifact }} ./cmd/conductor-tui
 
       - name: Upload to release
         env:
