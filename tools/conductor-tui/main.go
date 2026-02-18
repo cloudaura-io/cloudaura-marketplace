@@ -18,20 +18,10 @@ func main() {
 		}
 	}
 
-	p := tea.NewProgram(initialModel())
+	basePath, _ := os.Getwd()
+	p := tea.NewProgram(newModel(basePath), tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 }
-
-// placeholder model for initial build verification
-type model struct{}
-
-func initialModel() model { return model{} }
-
-func (m model) Init() tea.Cmd { return tea.Quit }
-
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) { return m, tea.Quit }
-
-func (m model) View() string { return "Conductor TUI placeholder\n" }
