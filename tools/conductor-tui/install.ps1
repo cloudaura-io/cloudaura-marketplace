@@ -1,4 +1,4 @@
-$repo = "cloudaura-io/cloudaura-marketplace"
+$repo = "cloudaura-io/conductor-claude-code"
 $dest = if ($env:INSTALL_DIR) { $env:INSTALL_DIR } else { "$env:LOCALAPPDATA\conductor-tui" }
 $tag = (Invoke-WebRequest -Uri "https://api.github.com/repos/$repo/releases/latest" -UseBasicParsing | ConvertFrom-Json).tag_name
 $url = "https://github.com/$repo/releases/download/$tag/conductor-tui-windows-x64.exe"

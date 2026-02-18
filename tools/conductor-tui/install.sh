@@ -1,6 +1,6 @@
 #!/bin/sh
 set -e
-REPO="cloudaura-io/cloudaura-marketplace"
+REPO="cloudaura-io/conductor-claude-code"
 DEST="${INSTALL_DIR:-/usr/local/bin}"
 OS=$(uname -s)
 ARCH=$(uname -m)
