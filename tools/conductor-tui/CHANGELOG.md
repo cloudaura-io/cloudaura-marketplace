@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.4.0](https://github.com/cloudaura-io/cloudaura-marketplace/compare/conductor-tui-v0.3.0...conductor-tui-v0.4.0) (2026-02-18)
+
+
+### Features
+
+* **conductor-tui:** update install.sh to support macOS ([8263053](https://github.com/cloudaura-io/cloudaura-marketplace/commit/82630531d18580d82c5d351e4d3f8a6853441bc5))
+
+
+### Bug Fixes
+
+* **conductor-tui:** add macOS build targets (darwin-x64, darwin-arm64) ([#16](https://github.com/cloudaura-io/cloudaura-marketplace/issues/16)) ([8263053](https://github.com/cloudaura-io/cloudaura-marketplace/commit/82630531d18580d82c5d351e4d3f8a6853441bc5))
+* **conductor:** update track metadata status and mark verification tasks ([8263053](https://github.com/cloudaura-io/cloudaura-marketplace/commit/82630531d18580d82c5d351e4d3f8a6853441bc5))
+
 ## [0.3.0](https://github.com/cloudaura-io/cloudaura-marketplace/compare/conductor-tui-v0.2.2...conductor-tui-v0.3.0) (2026-02-17)
 
 
