@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
+	"strconv"
+	"strings"
 )
 
 // SubTask represents a sub-task within a task.
@@ -134,7 +137,63 @@ func discoverTracks(basePath string) []Track {
 	return tracks
 }
 
-// parsePlan is a placeholder; will be implemented in a later task.
+var (
+	phaseRe   = regexp.MustCompile(`^## Phase (\d+): (.+?)(?:\s*\[checkpoint:\s*([a-f0-9]+)\])?\s*$`)
+	taskRe    = regexp.MustCompile(`^- \[([ x~])\] Task: (.+?)(?:\s+` + "`" + `([a-f0-9]{7,})` + "`" + `)?\s*$`)
+	subtaskRe = regexp.MustCompile(`^    - \[([ x])\] (.+)$`)
+)
+
+// parsePlan parses a plan.md file into a list of phases with tasks and sub-tasks.
 func parsePlan(content string) []Phase {
-	return nil
+	var phases []Phase
+	var currentPhase *Phase
+	var currentTask *Task
+
+	for _, line := range strings.Split(content, "\n") {
+		if m := phaseRe.FindStringSubmatch(line); m != nil {
+			if currentPhase != nil {
+				phases = append(phases, *currentPhase)
+			}
+			num, _ := strconv.Atoi(m[1])
+			checkpoint := ""
+			if len(m) > 3 {
+				checkpoint = m[3]
+			}
+			currentPhase = &Phase{
+				Number:     num,
+				Name:       strings.TrimSpace(m[2]),
+				Checkpoint: checkpoint,
+			}
+			currentTask = nil
+			continue
+		}
+
+		if m := taskRe.FindStringSubmatch(line); m != nil && currentPhase != nil {
+			commit := ""
+			if len(m) > 3 {
+				commit = m[3]
+			}
+			task := Task{
+				Name:      strings.TrimSpace(m[2]),
+				Completed: m[1] == "x",
+				Commit:    commit,
+			}
+			currentPhase.Tasks = append(currentPhase.Tasks, task)
+			currentTask = &currentPhase.Tasks[len(currentPhase.Tasks)-1]
+			continue
+		}
+
+		if m := subtaskRe.FindStringSubmatch(line); m != nil && currentTask != nil {
+			currentTask.SubTasks = append(currentTask.SubTasks, SubTask{
+				Name:      strings.TrimSpace(m[2]),
+				Completed: m[1] == "x",
+			})
+		}
+	}
+
+	if currentPhase != nil {
+		phases = append(phases, *currentPhase)
+	}
+
+	return phases
 }
