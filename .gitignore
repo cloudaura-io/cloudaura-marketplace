@@ -201,7 +201,10 @@ marimo/_lsp/
 __marimo__/
 
 .DS_Store
-node_modules/
+
+# Go
+tools/conductor-tui/conductor-tui
+tools/conductor-tui/conductor-tui.exe
 
 # Genkit
 .genkit/
