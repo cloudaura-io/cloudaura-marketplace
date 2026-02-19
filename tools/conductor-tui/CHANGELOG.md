@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/cloudaura-io/cloudaura-marketplace/compare/conductor-tui-v0.5.0...conductor-tui-v0.5.1) (2026-02-19)
+
+
+### Bug Fixes
+
+* **conductor-tui:** non root installers ([#21](https://github.com/cloudaura-io/cloudaura-marketplace/issues/21)) ([f8ff5bc](https://github.com/cloudaura-io/cloudaura-marketplace/commit/f8ff5bc32a821c9421604544fc6e00a15f314957))
+
 ## [0.5.0](https://github.com/cloudaura-io/cloudaura-marketplace/compare/conductor-tui-v0.4.0...conductor-tui-v0.5.0) (2026-02-18)
 
 
