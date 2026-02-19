@@ -83,7 +83,7 @@
 
 - [x] Task: Conductor - User Manual Verification 'Edit Mode Selection and Mode Implementations' (Protocol in workflow.md) `27be932`
 
-## Phase 4: Change Preview, Commit Protocol, and Finalization
+## Phase 4: Change Preview, Commit Protocol, and Finalization [checkpoint: 299224e]
 
 - [x] Task: Write Section 4.0 CHANGE PREVIEW AND WRITE PROTOCOL `a8773e0`
     - [x] Write inline summary preview generation logic (before/after for each modified file)
@@ -104,4 +104,4 @@
     - [x] Verify no references to undefined sections or protocols
     - [x] Verify the skill handles edge cases (empty tracks, single-task plans, plans with no pending items)
 
-- [~] Task: Conductor - User Manual Verification 'Change Preview, Commit Protocol, and Finalization' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Change Preview, Commit Protocol, and Finalization' (Protocol in workflow.md) `299224e`
