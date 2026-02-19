@@ -355,7 +355,7 @@ This mode operates in two stages, each requiring separate user approval.
 4.  **Write Files:** Execute file writes for all modified artifacts:
     -   Write `spec.md` if it was modified (Modes 1, 3).
     -   Write `plan.md` if it was modified (Modes 2, 3).
-    -   Write `metadata.json` if it was modified (Mode 4).
+    -   Write `metadata.json` with updated fields (Mode 4) or timestamp only (Modes 1, 2, 3).
     -   Write `tracks.md` if the track description was changed (Mode 4).
 
 5.  **Update Metadata Timestamp:** For ALL edit modes, update the `updated_at` field in the track's `metadata.json` to the current ISO 8601 timestamp (e.g., `2026-02-19T12:00:00Z`). This write happens regardless of which mode was used.
