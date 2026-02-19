@@ -16,7 +16,7 @@
 
 - [x] Task: Conductor - User Manual Verification 'Skill Scaffold and Foundation' (Protocol in workflow.md) `0f8d52f`
 
-## Phase 2: Track Selection and Editability Rules
+## Phase 2: Track Selection and Editability Rules [checkpoint: 259bf28]
 
 - [x] Task: Write Section 2.0 TRACK SELECTION protocol `83d2e27`
     - [x] Write step to read Tracks Registry and resolve all track directories
@@ -36,7 +36,7 @@
     - [x] Verify all status combinations are handled (new, in_progress, completed, cancelled)
     - [x] Verify locked item detection regex patterns match plan.md format (`[x]` with SHAs, checkpoints)
 
-- [~] Task: Conductor - User Manual Verification 'Track Selection and Editability Rules' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Track Selection and Editability Rules' (Protocol in workflow.md) `259bf28`
 
 ## Phase 3: Edit Mode Selection and Mode Implementations
 
