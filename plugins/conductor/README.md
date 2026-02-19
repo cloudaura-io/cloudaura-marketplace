@@ -7,7 +7,7 @@
 
 Conductor is a Claude Code plugin that enables **Context-Driven Development**. It turns Claude Code into a proactive project manager that follows a strict protocol to specify, plan, and implement software features and bug fixes.
 
-Instead of just writing code, Conductor ensures a consistent, high-quality lifecycle for every task: **Context -> Spec & Plan -> Implement**.
+Instead of just writing code, Conductor ensures a consistent, high-quality lifecycle for every task: **Context -> Spec & Plan -> Edit & Rescope -> Implement**.
 
 The philosophy behind Conductor is simple: control your code. By treating context as a managed artifact alongside your code, you transform your repository into a single source of truth that drives every agent interaction with deep, persistent project awareness.
 
@@ -15,6 +15,7 @@ The philosophy behind Conductor is simple: control your code. By treating contex
 
 - **Plan before you build**: Create specs and plans that guide the agent for new and existing codebases.
 - **Maintain context**: Ensure AI follows style guides, tech stack choices, and product goals.
+- **Edit mid-flight**: Modify specs, rescope plans, or adjust metadata on in-progress tracks without losing completed work.
 - **Iterate safely**: Review plans before code is written, keeping you firmly in the loop.
 - **Work as a team**: Set project-level context for your product, tech stack, and workflow preferences that become a shared foundation for your team.
 - **Build on existing projects**: Intelligent initialization for both new (Greenfield) and existing (Brownfield) projects.
@@ -55,6 +56,7 @@ claude plugin install conductor@cloudaura-marketplace --scope local
 Start a new Claude Code session and type `/conductor:` - you should see available commands:
 - `/conductor:setup`
 - `/conductor:new-track`
+- `/conductor:edit-track`
 - `/conductor:implement`
 - `/conductor:status`
 - `/conductor:revert`
@@ -105,7 +107,24 @@ When you're ready to take on a new feature or bug fix, run `/conductor:new-track
 /conductor:new-track "Add a dark mode toggle to the settings page"
 ```
 
-### 3. Implement the Track
+### 3. Edit an Existing Track
+
+Requirements change. When they do, run `/conductor:edit-track` to modify a track that's already in progress — without losing completed work.
+
+Conductor offers four edit modes:
+
+- **Edit Spec**: Modify the specification, with a changelog entry appended automatically.
+- **Edit Plan**: Add, remove, or reorder pending tasks and phases. Completed items are locked; in-progress items require confirmation.
+- **Rescope**: Update the spec and regenerate all remaining plan items in one flow.
+- **Edit Metadata**: Change the track's description or type.
+
+```bash
+/conductor:edit-track
+# OR target a specific track
+/conductor:edit-track "dark mode toggle"
+```
+
+### 4. Implement the Track
 
 Once you approve the plan, run `/conductor:implement`. Your coding agent then works through the `plan.md` file, checking off tasks as it completes them.
 
@@ -146,6 +165,7 @@ During implementation, you can also:
 | :--- | :--- | :--- |
 | `/conductor:setup` | Scaffolds the project and sets up the Conductor environment. Run this once per project. | `conductor/product.md`<br>`conductor/product-guidelines.md`<br>`conductor/tech-stack.md`<br>`conductor/workflow.md`<br>`conductor/tracks.md` |
 | `/conductor:new-track` | Starts a new feature or bug track. Generates `spec.md` and `plan.md`. | `conductor/tracks/<id>/spec.md`<br>`conductor/tracks/<id>/plan.md`<br>`conductor/tracks.md` |
+| `/conductor:edit-track` | Modifies an existing track's spec, plan, or metadata. Supports rescoping. | `conductor/tracks/<id>/spec.md`<br>`conductor/tracks/<id>/plan.md`<br>`conductor/tracks/<id>/metadata.json` |
 | `/conductor:implement` | Executes the tasks defined in the current track's plan. | `conductor/tracks.md`<br>`conductor/tracks/<id>/plan.md` |
 | `/conductor:status` | Displays the current progress of the tracks file and active tracks. | Reads `conductor/tracks.md` |
 | `/conductor:revert` | Reverts a track, phase, or task by analyzing git history. | Reverts git history |
