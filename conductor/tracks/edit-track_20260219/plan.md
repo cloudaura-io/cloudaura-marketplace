@@ -40,46 +40,46 @@
 
 ## Phase 3: Edit Mode Selection and Mode Implementations
 
-- [ ] Task: Write Section 3.0 EDIT MODE SELECTION
-    - [ ] Write AskUserQuestion presenting four modes: Edit Spec, Edit Plan, Rescope, Edit Metadata
-    - [ ] Write routing logic to the correct mode section based on user selection
+- [x] Task: Write Section 3.0 EDIT MODE SELECTION `7fbf390`
+    - [x] Write AskUserQuestion presenting four modes: Edit Spec, Edit Plan, Rescope, Edit Metadata
+    - [x] Write routing logic to the correct mode section based on user selection
 
-- [ ] Task: Write Section 3.1 MODE 1 - EDIT SPEC
-    - [ ] Write step to read and display current spec.md content
-    - [ ] Write interactive questioning flow for gathering desired changes
-    - [ ] Write step to generate updated spec content
-    - [ ] Write Changes log entry logic: append dated `## Changes` section (or prepend within existing section)
-    - [ ] Write change preview presentation (inline summary format)
-    - [ ] Write AskUserQuestion confirmation before writing
+- [x] Task: Write Section 3.1 MODE 1 - EDIT SPEC `7fbf390`
+    - [x] Write step to read and display current spec.md content
+    - [x] Write interactive questioning flow for gathering desired changes
+    - [x] Write step to generate updated spec content
+    - [x] Write Changes log entry logic: append dated `## Changes` section (or prepend within existing section)
+    - [x] Write change preview presentation (inline summary format)
+    - [x] Write AskUserQuestion confirmation before writing
 
-- [ ] Task: Write Section 3.2 MODE 2 - EDIT PLAN
-    - [ ] Write step to read and display current plan.md with locked/editable annotations
-    - [ ] Write interactive flow for plan modifications (add, remove, reorder, rewrite pending items)
-    - [ ] Write preservation logic for completed items, commit SHAs, and checkpoint annotations
-    - [ ] Write change preview presentation (inline summary format)
-    - [ ] Write AskUserQuestion confirmation before writing
+- [x] Task: Write Section 3.2 MODE 2 - EDIT PLAN `7fbf390`
+    - [x] Write step to read and display current plan.md with locked/editable annotations
+    - [x] Write interactive flow for plan modifications (add, remove, reorder, rewrite pending items)
+    - [x] Write preservation logic for completed items, commit SHAs, and checkpoint annotations
+    - [x] Write change preview presentation (inline summary format)
+    - [x] Write AskUserQuestion confirmation before writing
 
-- [ ] Task: Write Section 3.3 MODE 3 - RESCOPE
-    - [ ] Write Stage 1: Edit Spec flow (reuse Mode 1 logic, user approves updated spec)
-    - [ ] Write Stage 2: Regenerate pending plan from updated spec
-    - [ ] Write step to read Workflow file and apply TDD methodology to regenerated plan
-    - [ ] Write preservation logic for completed/in-progress items during plan regeneration
-    - [ ] Write injection of Phase Completion Verification tasks for new phases
-    - [ ] Write two-stage approval flow (spec approval, then plan approval)
+- [x] Task: Write Section 3.3 MODE 3 - RESCOPE `7fbf390`
+    - [x] Write Stage 1: Edit Spec flow (reuse Mode 1 logic, user approves updated spec)
+    - [x] Write Stage 2: Regenerate pending plan from updated spec
+    - [x] Write step to read Workflow file and apply TDD methodology to regenerated plan
+    - [x] Write preservation logic for completed/in-progress items during plan regeneration
+    - [x] Write injection of Phase Completion Verification tasks for new phases
+    - [x] Write two-stage approval flow (spec approval, then plan approval)
 
-- [ ] Task: Write Section 3.4 MODE 4 - EDIT METADATA
-    - [ ] Write step to read and display current metadata.json
-    - [ ] Write AskUserQuestion for selecting fields to edit (description, type)
-    - [ ] Write step to update `updated_at` timestamp
-    - [ ] Write step to update Tracks Registry entry if description changes
-    - [ ] Write change preview and confirmation flow
+- [x] Task: Write Section 3.4 MODE 4 - EDIT METADATA `7fbf390`
+    - [x] Write step to read and display current metadata.json
+    - [x] Write AskUserQuestion for selecting fields to edit (description, type)
+    - [x] Write step to update `updated_at` timestamp
+    - [x] Write step to update Tracks Registry entry if description changes
+    - [x] Write change preview and confirmation flow
 
-- [ ] Task: Verify all four edit modes
-    - [ ] Verify Edit Spec includes dated Changes log format
-    - [ ] Verify Edit Plan preserves all `[x]` items and commit SHA references
-    - [ ] Verify Rescope uses two-stage approval and follows Workflow methodology
-    - [ ] Verify Edit Metadata updates both metadata.json and tracks.md when description changes
-    - [ ] Verify all modes use AskUserQuestion with correct format
+- [x] Task: Verify all four edit modes `7fbf390`
+    - [x] Verify Edit Spec includes dated Changes log format
+    - [x] Verify Edit Plan preserves all `[x]` items and commit SHA references
+    - [x] Verify Rescope uses two-stage approval and follows Workflow methodology
+    - [x] Verify Edit Metadata updates both metadata.json and tracks.md when description changes
+    - [x] Verify all modes use AskUserQuestion with correct format
 
 - [ ] Task: Conductor - User Manual Verification 'Edit Mode Selection and Mode Implementations' (Protocol in workflow.md)
 
