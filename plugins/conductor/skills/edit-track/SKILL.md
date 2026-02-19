@@ -313,3 +313,73 @@ This mode operates in two stages, each requiring separate user approval.
 5.  **Update Tracks Registry (if description changed):** If the description field was modified, you MUST also update the corresponding entry in the **Tracks Registry** (`tracks.md`) to reflect the new description. The entry format is: `- [<status>] **Track: <New Description>**`.
 
 6.  **Proceed to Preview:** Pass the updated metadata (and updated Tracks Registry content if applicable) to **Section 4.0 CHANGE PREVIEW AND WRITE PROTOCOL**.
+
+---
+
+## 4.0 CHANGE PREVIEW AND WRITE PROTOCOL
+**PROTOCOL: Present a summary of all proposed changes and write files only after user approval.**
+
+1.  **Generate Inline Summary:** Construct a summary of all files that will be modified. Present it in a markdown code block using the following format:
+
+    ```
+    === Proposed Changes ===
+
+    File: <relative path to file>
+    Action: Modified
+    Summary: <brief description of what changed>
+
+    File: <relative path to file>
+    Action: Modified
+    Summary: <brief description of what changed>
+
+    ---
+    Additionally: metadata.json `updated_at` will be set to <current ISO timestamp>
+    ```
+
+    Include an entry for each file that will be written (e.g., `spec.md`, `plan.md`, `metadata.json`, `tracks.md`).
+
+2.  **Request Approval:** Use the `AskUserQuestion` tool with:
+    -   **header:** "Confirm"
+    -   **question:** "Do you approve these changes?"
+    -   **multiSelect:** false
+    -   **options:**
+        1. label: "Approve (Recommended)", description: "Write all changes to disk"
+        2. label: "Revise", description: "Go back and adjust the changes"
+        3. label: "Cancel", description: "Discard all changes and exit"
+
+3.  **Handle Response:**
+    -   **If "Approve":** Proceed to write all files.
+    -   **If "Revise":** Return to the active edit mode section (3.1, 3.2, 3.3, or 3.4) and allow the user to make adjustments. Then re-present the preview.
+    -   **If "Cancel":** Announce: "All changes have been discarded. No files were modified." Then HALT.
+
+4.  **Write Files:** Execute file writes for all modified artifacts:
+    -   Write `spec.md` if it was modified (Modes 1, 3).
+    -   Write `plan.md` if it was modified (Modes 2, 3).
+    -   Write `metadata.json` if it was modified (Mode 4).
+    -   Write `tracks.md` if the track description was changed (Mode 4).
+
+5.  **Update Metadata Timestamp:** For ALL edit modes, update the `updated_at` field in the track's `metadata.json` to the current ISO 8601 timestamp (e.g., `2026-02-19T12:00:00Z`). This write happens regardless of which mode was used.
+
+6.  **Proceed to Commit:** After all files are written, proceed to **Section 5.0 COMMIT PROTOCOL**.
+
+---
+
+## 5.0 COMMIT PROTOCOL
+**PROTOCOL: Commit all changes from the edit operation.**
+
+1.  **Stage Files:** Stage all files that were modified during this edit operation. This may include:
+    -   `spec.md`
+    -   `plan.md`
+    -   `metadata.json`
+    -   `tracks.md` (if description was changed in Mode 4)
+
+2.  **Construct Commit Message:** Use the format `conductor(edit): <description>` where the description reflects what was edited. Examples:
+    -   `conductor(edit): Update spec for edit-track skill`
+    -   `conductor(edit): Modify pending tasks in auth feature plan`
+    -   `conductor(edit): Rescope plan for auth feature track`
+    -   `conductor(edit): Update metadata description for bugfix track`
+
+3.  **Execute Commit:** Perform the commit with the constructed message.
+
+4.  **Announce Completion:** Inform the user:
+    > "Edit complete. All changes have been committed. You can continue implementation with `/conductor:implement` or make further edits with `/conductor:edit-track`."
