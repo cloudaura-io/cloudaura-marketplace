@@ -7,8 +7,4 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [x] **Track: Improve AskUserQuestion integration across all skills**
   *Link: [./tracks/askuserquestion_20260213/](./tracks/askuserquestion_20260213/)*
 
----
-
-- [x] **Track: Implement /conductor:edit-track skill for modifying existing track specs, plans, and metadata**
-  *Link: [./tracks/edit-track_20260219/](./tracks/edit-track_20260219/)*
 
