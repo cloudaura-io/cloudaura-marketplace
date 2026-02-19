@@ -9,6 +9,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [~] **Track: Implement /conductor:edit-track skill for modifying existing track specs, plans, and metadata**
+- [x] **Track: Implement /conductor:edit-track skill for modifying existing track specs, plans, and metadata**
   *Link: [./tracks/edit-track_20260219/](./tracks/edit-track_20260219/)*
 
