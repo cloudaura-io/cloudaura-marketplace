@@ -36,7 +36,7 @@
     - [x] Verify all status combinations are handled (new, in_progress, completed, cancelled)
     - [x] Verify locked item detection regex patterns match plan.md format (`[x]` with SHAs, checkpoints)
 
-- [ ] Task: Conductor - User Manual Verification 'Track Selection and Editability Rules' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Track Selection and Editability Rules' (Protocol in workflow.md)
 
 ## Phase 3: Edit Mode Selection and Mode Implementations
 
