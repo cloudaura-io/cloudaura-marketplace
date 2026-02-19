@@ -141,3 +141,175 @@ When editing the `plan.md` of a track with status `in_progress`, the following r
 
 3.  **Pending Items — Freely Editable:**
     -   Any task or phase marked as `[ ]` can be freely added, removed, reordered, or rewritten without restriction.
+
+---
+
+## 3.0 EDIT MODE SELECTION
+**PROTOCOL: Present edit modes and route to the appropriate handler.**
+
+1.  **Present Edit Modes:** Use the `AskUserQuestion` tool with:
+    -   **header:** "Edit Mode"
+    -   **question:** "What do you want to edit for track '<selected_track description>'?"
+    -   **multiSelect:** false
+    -   **options:**
+        1. label: "Edit Spec", description: "Modify the track's specification (spec.md)"
+        2. label: "Edit Plan", description: "Modify pending tasks and phases in the plan (plan.md)"
+        3. label: "Rescope", description: "Update the spec AND regenerate the remaining plan"
+        4. label: "Edit Metadata", description: "Change track description or type in metadata.json"
+
+2.  **Route to Handler:** Based on the user's selection:
+    -   **"Edit Spec"** → Proceed to **Section 3.1 MODE 1 - EDIT SPEC**
+    -   **"Edit Plan"** → Proceed to **Section 3.2 MODE 2 - EDIT PLAN**
+    -   **"Rescope"** → Proceed to **Section 3.3 MODE 3 - RESCOPE**
+    -   **"Edit Metadata"** → Proceed to **Section 3.4 MODE 4 - EDIT METADATA**
+    -   **Other (custom input):** Interpret the user's intent and route to the most appropriate mode. If unclear, ask for clarification.
+
+3.  **After Mode Completion:** All modes converge at **Section 4.0 CHANGE PREVIEW AND WRITE PROTOCOL** before any files are written.
+
+---
+
+## 3.1 MODE 1 - EDIT SPEC
+**PROTOCOL: Interactive modification of the track's specification.**
+
+1.  **Load Current Spec:** Resolve and read the track's **Specification** (`spec.md`) using the **Universal File Resolution Protocol**.
+
+2.  **Display Current Content:** Present the full spec content to the user in a markdown code block so they can see what exists.
+
+3.  **Gather Changes:** Ask the user what changes they want to make:
+    > "What changes would you like to make to this specification? You can describe the changes in natural language."
+    -   Wait for the user's response.
+    -   If the changes are unclear or broad, ask follow-up questions to clarify scope and intent. Ask questions sequentially (one at a time) using the `AskUserQuestion` tool where appropriate.
+
+4.  **Generate Updated Spec:** Based on the user's requested changes, generate the updated `spec.md` content. Preserve all existing sections and structure unless the user explicitly asks to restructure.
+
+5.  **Append Changes Log Entry:** Add a dated entry to the `## Changes` section at the bottom of `spec.md`:
+    -   **If no `## Changes` section exists:** Append one:
+        ```markdown
+
+        ## Changes
+
+        ### YYYY-MM-DD
+        - <description of change>
+        ```
+    -   **If a `## Changes` section already exists:** Prepend the new dated entry within it (most recent first):
+        ```markdown
+        ## Changes
+
+        ### YYYY-MM-DD
+        - <description of new change>
+
+        ### <previous date>
+        - <previous change>
+        ```
+    -   Use the current date for `YYYY-MM-DD`.
+
+6.  **Proceed to Preview:** Pass the updated spec content to **Section 4.0 CHANGE PREVIEW AND WRITE PROTOCOL**.
+
+---
+
+## 3.2 MODE 2 - EDIT PLAN
+**PROTOCOL: Interactive modification of the track's implementation plan.**
+
+1.  **Load Current Plan:** Resolve and read the track's **Implementation Plan** (`plan.md`) using the **Universal File Resolution Protocol**.
+
+2.  **Analyze and Annotate:** Parse the plan and classify every item:
+    -   **LOCKED** (completed `[x]` items with SHAs and checkpoint annotations) — display with a `🔒` prefix
+    -   **WARNING** (in-progress `[~]` items) — display with a `⚠️` prefix
+    -   **EDITABLE** (pending `[ ]` items) — display with a `✏️` prefix
+    Present this annotated view to the user.
+
+3.  **Gather Changes:** Ask the user what modifications they want:
+    > "What changes would you like to make to the plan? You can add, remove, reorder, or rewrite any editable (✏️) items."
+    -   Wait for the user's response.
+    -   If the user attempts to modify a LOCKED item, announce: "This item is completed and locked. Completed tasks and their commit references cannot be modified." and ask what else they'd like to change.
+    -   If the user wants to modify a WARNING item, execute the **In-Progress Items warning flow** from **Section 2.1**.
+
+4.  **Generate Updated Plan:** Apply the requested changes to produce the updated `plan.md` content:
+    -   **CRITICAL:** All LOCKED items MUST be preserved exactly as-is, including commit SHA references, checkpoint annotations, and all surrounding text.
+    -   Modified in-progress items are reset from `[~]` to `[ ]`.
+    -   New tasks/phases use the `[ ]` marker.
+
+5.  **Proceed to Preview:** Pass the updated plan content to **Section 4.0 CHANGE PREVIEW AND WRITE PROTOCOL**.
+
+---
+
+## 3.3 MODE 3 - RESCOPE
+**PROTOCOL: Combined spec update and plan regeneration.**
+
+This mode operates in two stages, each requiring separate user approval.
+
+### Stage 1: Edit Spec
+
+1.  **Execute Edit Spec Flow:** Follow the exact steps from **Section 3.1 MODE 1 - EDIT SPEC** (steps 1-5) to gather changes and generate the updated spec.
+
+2.  **Present Updated Spec for Approval:** Display the updated spec content in a markdown code block. Use the `AskUserQuestion` tool with:
+    -   **header:** "Spec Review"
+    -   **question:** "Does this updated specification look correct? (Stage 1 of 2)"
+    -   **multiSelect:** false
+    -   **options:**
+        1. label: "Approve (Recommended)", description: "Spec is correct, proceed to plan regeneration"
+        2. label: "Suggest changes", description: "I have modifications to request"
+    -   If the user suggests changes, revise and re-present until approved.
+
+3.  **Write Approved Spec:** Once approved, the updated spec content (including the Changes log entry) is staged for writing.
+
+### Stage 2: Regenerate Plan
+
+1.  **Load Context:** Read the approved updated spec content and the **Workflow** file (resolved via the **Universal File Resolution Protocol**).
+
+2.  **Load Current Plan:** Read the track's current `plan.md`.
+
+3.  **Identify Preserved Content:** Parse the current plan and extract all content that MUST be preserved:
+    -   All completed phases and tasks (`[x]` with SHAs and checkpoint annotations)
+    -   All in-progress tasks (`[~]`) — these are preserved as-is unless the user explicitly requested changes to them in Stage 1
+
+4.  **Regenerate Pending Content:** Based on the updated spec:
+    -   Remove all existing pending (`[ ]`) phases and tasks.
+    -   Generate new pending phases and tasks that implement the updated specification.
+    -   **CRITICAL:** The regenerated plan MUST adhere to the **Workflow** methodology (TDD structure with "Write Tests" and "Implement" tasks).
+    -   **CRITICAL:** For each new phase, append a Phase Completion Verification meta-task: `- [ ] Task: Conductor - User Manual Verification '<Phase Name>' (Protocol in workflow.md)`.
+
+5.  **Assemble Complete Plan:** Combine the preserved content with the regenerated pending content into a complete `plan.md`.
+
+6.  **Present Regenerated Plan for Approval:** Display the complete plan in a markdown code block. Use the `AskUserQuestion` tool with:
+    -   **header:** "Plan Review"
+    -   **question:** "Does this regenerated plan look correct? (Stage 2 of 2)"
+    -   **multiSelect:** false
+    -   **options:**
+        1. label: "Approve (Recommended)", description: "Plan is correct, proceed to write changes"
+        2. label: "Suggest changes", description: "I have modifications to request"
+    -   If the user suggests changes, revise and re-present until approved.
+
+7.  **Proceed to Preview:** Pass both the updated spec and the regenerated plan to **Section 4.0 CHANGE PREVIEW AND WRITE PROTOCOL**.
+
+---
+
+## 3.4 MODE 4 - EDIT METADATA
+**PROTOCOL: Modify the track's metadata fields.**
+
+1.  **Load Current Metadata:** Resolve and read the track's **Metadata** (`metadata.json`) using the **Universal File Resolution Protocol**.
+
+2.  **Display Current Metadata:** Present the current metadata content to the user.
+
+3.  **Select Fields to Edit:** Use the `AskUserQuestion` tool with:
+    -   **header:** "Fields"
+    -   **question:** "Which metadata fields do you want to edit?"
+    -   **multiSelect:** true
+    -   **options:**
+        1. label: "Description", description: "Change the track's description text"
+        2. label: "Type", description: "Change the track type (feature, bug, chore, etc.)"
+
+4.  **Gather New Values:** For each selected field, ask the user for the new value:
+    -   **If "Description" selected:** Ask: "What should the new description be?" Wait for the user's response.
+    -   **If "Type" selected:** Use the `AskUserQuestion` tool with:
+        -   **header:** "Type"
+        -   **question:** "What should the new track type be?"
+        -   **multiSelect:** false
+        -   **options:**
+            1. label: "Feature", description: "A new feature or enhancement"
+            2. label: "Bug", description: "A bug fix"
+            3. label: "Chore", description: "Maintenance or infrastructure task"
+
+5.  **Update Tracks Registry (if description changed):** If the description field was modified, you MUST also update the corresponding entry in the **Tracks Registry** (`tracks.md`) to reflect the new description. The entry format is: `- [<status>] **Track: <New Description>**`.
+
+6.  **Proceed to Preview:** Pass the updated metadata (and updated Tracks Registry content if applicable) to **Section 4.0 CHANGE PREVIEW AND WRITE PROTOCOL**.
