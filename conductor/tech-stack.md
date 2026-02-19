@@ -36,6 +36,7 @@ plugins/conductor/
 ├── skills/                   # Skill definitions
 │   ├── setup/SKILL.md
 │   ├── new-track/SKILL.md
+│   ├── edit-track/SKILL.md
 │   ├── implement/SKILL.md
 │   ├── status/SKILL.md
 │   ├── revert/SKILL.md

@@ -23,6 +23,7 @@ The core philosophy: **Measure twice, code once.** By treating context as a mana
 1. **Maintain Project Context** - Ensure AI agents consistently follow style guides, tech stack choices, and product goals throughout development
 2. **Structured Development Workflow** - Plan features and bug fixes before coding with detailed specifications and actionable task lists organized into phases
 3. **Safe Iteration and Review** - Review plans before code is written, with the ability to revert logical units of work (tracks, phases, tasks) rather than just commit hashes
+4. **Flexible Rescoping** - Edit specifications, modify pending plans, and rescope tracks mid-implementation when requirements change, while protecting completed work
 
 ## Key Differentiators
 
