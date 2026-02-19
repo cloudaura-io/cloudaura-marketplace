@@ -85,23 +85,23 @@
 
 ## Phase 4: Change Preview, Commit Protocol, and Finalization
 
-- [ ] Task: Write Section 4.0 CHANGE PREVIEW AND WRITE PROTOCOL
-    - [ ] Write inline summary preview generation logic (before/after for each modified file)
-    - [ ] Write AskUserQuestion approval step before any file writes
-    - [ ] Write file write execution steps (spec.md, plan.md, metadata.json as applicable)
-    - [ ] Write `updated_at` timestamp update in metadata.json for all edit modes
+- [x] Task: Write Section 4.0 CHANGE PREVIEW AND WRITE PROTOCOL `a8773e0`
+    - [x] Write inline summary preview generation logic (before/after for each modified file)
+    - [x] Write AskUserQuestion approval step before any file writes
+    - [x] Write file write execution steps (spec.md, plan.md, metadata.json as applicable)
+    - [x] Write `updated_at` timestamp update in metadata.json for all edit modes
 
-- [ ] Task: Write Section 5.0 COMMIT PROTOCOL
-    - [ ] Write step to stage all modified track files
-    - [ ] Write commit message format: `conductor(edit): <description>`
-    - [ ] Write examples for each edit mode's commit message
-    - [ ] Write completion announcement to user
+- [x] Task: Write Section 5.0 COMMIT PROTOCOL `a8773e0`
+    - [x] Write step to stage all modified track files
+    - [x] Write commit message format: `conductor(edit): <description>`
+    - [x] Write examples for each edit mode's commit message
+    - [x] Write completion announcement to user
 
-- [ ] Task: Final structural review of complete SKILL.md
-    - [ ] Verify all sections are numbered consistently
-    - [ ] Verify all AskUserQuestion calls have proper header, question, options, multiSelect fields
-    - [ ] Verify section ordering and flow matches existing skill patterns
-    - [ ] Verify no references to undefined sections or protocols
-    - [ ] Verify the skill handles edge cases (empty tracks, single-task plans, plans with no pending items)
+- [x] Task: Final structural review of complete SKILL.md `a8773e0`
+    - [x] Verify all sections are numbered consistently
+    - [x] Verify all AskUserQuestion calls have proper header, question, options, multiSelect fields
+    - [x] Verify section ordering and flow matches existing skill patterns
+    - [x] Verify no references to undefined sections or protocols
+    - [x] Verify the skill handles edge cases (empty tracks, single-task plans, plans with no pending items)
 
-- [ ] Task: Conductor - User Manual Verification 'Change Preview, Commit Protocol, and Finalization' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Change Preview, Commit Protocol, and Finalization' (Protocol in workflow.md)
