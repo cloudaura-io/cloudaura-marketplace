@@ -14,7 +14,7 @@
     - [x] Verify Universal File Resolution Protocol section matches verbatim across skills
     - [x] Verify Setup Check section follows established pattern
 
-- [ ] Task: Conductor - User Manual Verification 'Skill Scaffold and Foundation' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Skill Scaffold and Foundation' (Protocol in workflow.md)
 
 ## Phase 2: Track Selection and Editability Rules
 
