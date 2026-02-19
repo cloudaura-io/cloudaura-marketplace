@@ -81,7 +81,7 @@
     - [x] Verify Edit Metadata updates both metadata.json and tracks.md when description changes
     - [x] Verify all modes use AskUserQuestion with correct format
 
-- [ ] Task: Conductor - User Manual Verification 'Edit Mode Selection and Mode Implementations' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Edit Mode Selection and Mode Implementations' (Protocol in workflow.md)
 
 ## Phase 4: Change Preview, Commit Protocol, and Finalization
 
