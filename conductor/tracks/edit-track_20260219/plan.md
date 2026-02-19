@@ -18,23 +18,23 @@
 
 ## Phase 2: Track Selection and Editability Rules
 
-- [ ] Task: Write Section 2.0 TRACK SELECTION protocol
-    - [ ] Write step to read Tracks Registry and resolve all track directories
-    - [ ] Write step to read each track's `metadata.json` and filter by status (`new` or `in_progress`)
-    - [ ] Write step to present editable tracks via AskUserQuestion (guided menu)
-    - [ ] Write handling for completed/cancelled tracks: inform user to create new track or reopen
-    - [ ] Write handling for no editable tracks found: halt with informative message
+- [x] Task: Write Section 2.0 TRACK SELECTION protocol `83d2e27`
+    - [x] Write step to read Tracks Registry and resolve all track directories
+    - [x] Write step to read each track's `metadata.json` and filter by status (`new` or `in_progress`)
+    - [x] Write step to present editable tracks via AskUserQuestion (guided menu)
+    - [x] Write handling for completed/cancelled tracks: inform user to create new track or reopen
+    - [x] Write handling for no editable tracks found: halt with informative message
 
-- [ ] Task: Write Section 2.1 STATUS-BASED EDITABILITY RULES
-    - [ ] Document the editability matrix (new: fully editable, in_progress: constrained, completed/cancelled: locked)
-    - [ ] Write in-progress constraint rules: completed items `[x]` locked, in-progress `[~]` requires warning + confirmation, pending `[ ]` freely editable
-    - [ ] Write the warning text and AskUserQuestion confirmation flow for `[~]` task modification
-    - [ ] Write auto-reset rule: modified `[~]` tasks revert to `[ ]`
+- [x] Task: Write Section 2.1 STATUS-BASED EDITABILITY RULES `83d2e27`
+    - [x] Document the editability matrix (new: fully editable, in_progress: constrained, completed/cancelled: locked)
+    - [x] Write in-progress constraint rules: completed items `[x]` locked, in-progress `[~]` requires warning + confirmation, pending `[ ]` freely editable
+    - [x] Write the warning text and AskUserQuestion confirmation flow for `[~]` task modification
+    - [x] Write auto-reset rule: modified `[~]` tasks revert to `[ ]`
 
-- [ ] Task: Verify track selection and editability logic
-    - [ ] Verify AskUserQuestion format follows spec (header max 12 chars, options with label/description)
-    - [ ] Verify all status combinations are handled (new, in_progress, completed, cancelled)
-    - [ ] Verify locked item detection regex patterns match plan.md format (`[x]` with SHAs, checkpoints)
+- [x] Task: Verify track selection and editability logic `83d2e27`
+    - [x] Verify AskUserQuestion format follows spec (header max 12 chars, options with label/description)
+    - [x] Verify all status combinations are handled (new, in_progress, completed, cancelled)
+    - [x] Verify locked item detection regex patterns match plan.md format (`[x]` with SHAs, checkpoints)
 
 - [ ] Task: Conductor - User Manual Verification 'Track Selection and Editability Rules' (Protocol in workflow.md)
 
