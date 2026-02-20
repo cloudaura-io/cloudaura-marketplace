@@ -26,40 +26,43 @@ func (m Model) HandleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	switch msg.String() {
 	case "up":
-		if s.ScreenType == ScreenDetail {
-			m.MoveScroll(-1)
-		} else if s.ScreenType == ScreenEdit {
+		if s.ScreenType == ScreenEdit {
 			m.MoveEditField(-1)
 		} else {
 			m.MoveCursor(-1)
 		}
 	case "down":
-		if s.ScreenType == ScreenDetail {
-			m.MoveScroll(1)
-		} else if s.ScreenType == ScreenEdit {
+		if s.ScreenType == ScreenEdit {
 			m.MoveEditField(1)
 		} else {
 			m.MoveCursor(1)
 		}
 	case "enter":
 		if s.ScreenType == ScreenEdit {
-			m.cycleEditField(1)
-			m.saveCurrentTrack()
+			sp := &m.Stack[len(m.Stack)-1]
+			if sp.Editing {
+				sp.Editing = false
+			} else {
+				sp.Editing = true
+			}
 		} else {
 			m.handleEnter(tracks)
 		}
 	case "right":
-		if s.ScreenType == ScreenEdit {
+		if s.ScreenType == ScreenEdit && m.CurrentScreen().Editing {
 			m.cycleEditField(1)
 			m.saveCurrentTrack()
 		}
 	case "left":
-		if s.ScreenType == ScreenEdit {
+		if s.ScreenType == ScreenEdit && m.CurrentScreen().Editing {
 			m.cycleEditField(-1)
 			m.saveCurrentTrack()
 		}
 	case "esc":
-		if len(m.Stack) > 1 {
+		if s.ScreenType == ScreenEdit && m.CurrentScreen().Editing {
+			sp := &m.Stack[len(m.Stack)-1]
+			sp.Editing = false
+		} else if len(m.Stack) > 1 {
 			m.Stack = m.Stack[:len(m.Stack)-1]
 		} else {
 			m.Stack = append(m.Stack, Screen{ScreenType: ScreenQuit})

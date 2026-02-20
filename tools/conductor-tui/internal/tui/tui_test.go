@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -340,7 +341,7 @@ func TestHandleKey_PKeyOnTracksDoesNothing(t *testing.T) {
 	}
 }
 
-func TestHandleKey_EscOnEditGoesBack(t *testing.T) {
+func TestHandleKey_EscOnEditNotEditingGoesBack(t *testing.T) {
 	m := testModelWithTracks()
 	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0})
 
@@ -348,10 +349,67 @@ func TestHandleKey_EscOnEditGoesBack(t *testing.T) {
 	updated := result.(Model)
 
 	if len(updated.Stack) != 1 {
-		t.Fatalf("stack length = %d, want 1 after Esc on edit", len(updated.Stack))
+		t.Fatalf("stack length = %d, want 1 after Esc on edit (not editing)", len(updated.Stack))
 	}
 	if updated.CurrentScreen().ScreenType != ScreenTracks {
 		t.Errorf("expected tracks screen, got %d", updated.CurrentScreen().ScreenType)
+	}
+}
+
+func TestHandleKey_EscOnEditWhileEditingStopsEditing(t *testing.T) {
+	m := testModelWithTracks()
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0, Editing: true})
+
+	result, _ := m.HandleKey(tea.KeyMsg{Type: tea.KeyEscape})
+	updated := result.(Model)
+
+	if len(updated.Stack) != 2 {
+		t.Fatalf("stack length = %d, want 2 (should stay on edit screen)", len(updated.Stack))
+	}
+	if updated.CurrentScreen().ScreenType != ScreenEdit {
+		t.Errorf("expected edit screen, got %d", updated.CurrentScreen().ScreenType)
+	}
+	if updated.CurrentScreen().Editing {
+		t.Error("Editing should be false after Esc while editing")
+	}
+}
+
+func TestHandleKey_EnterOnEditNotEditingActivatesEditing(t *testing.T) {
+	m := testModelWithTracks()
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0})
+
+	result, _ := m.HandleKey(tea.KeyMsg{Type: tea.KeyEnter})
+	updated := result.(Model)
+
+	if !updated.CurrentScreen().Editing {
+		t.Error("Enter on edit screen (not editing) should activate editing mode")
+	}
+	if updated.CurrentScreen().ScreenType != ScreenEdit {
+		t.Errorf("should remain on edit screen, got %d", updated.CurrentScreen().ScreenType)
+	}
+}
+
+func TestHandleKey_EnterOnEditWhileEditingSavesAndExits(t *testing.T) {
+	m := testModelWithTracks()
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0, Editing: true})
+
+	result, _ := m.HandleKey(tea.KeyMsg{Type: tea.KeyEnter})
+	updated := result.(Model)
+
+	if updated.CurrentScreen().Editing {
+		t.Error("Enter on edit screen (editing) should deactivate editing mode")
+	}
+	if updated.CurrentScreen().ScreenType != ScreenEdit {
+		t.Errorf("should remain on edit screen, got %d", updated.CurrentScreen().ScreenType)
+	}
+}
+
+func TestHandleKey_EditScreenStartsNotEditing(t *testing.T) {
+	m := testModelWithTracks()
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0})
+
+	if m.CurrentScreen().Editing {
+		t.Error("edit screen should start with Editing = false")
 	}
 }
 
@@ -611,14 +669,49 @@ func TestViewDetail_Content(t *testing.T) {
 	if !strings.Contains(output, "Add deps") {
 		t.Error("detail view should contain task name 'Add deps'")
 	}
-	if !strings.Contains(output, "Sub-tasks:") {
-		t.Error("detail view should contain 'Sub-tasks:' label")
+	if !strings.Contains(output, "Sub-tasks: (2)") {
+		t.Error("detail view should contain 'Sub-tasks: (2)' label with count")
 	}
 	if !strings.Contains(output, "Add framework") {
 		t.Error("detail view should show sub-task 'Add framework'")
 	}
 	if !strings.Contains(output, "Add linter") {
 		t.Error("detail view should show sub-task 'Add linter'")
+	}
+	if !strings.Contains(output, ">") {
+		t.Error("detail view should show cursor '>' on selected sub-task")
+	}
+}
+
+func TestViewDetail_ScrollIndicators(t *testing.T) {
+	m := testModelWithTracks()
+	// Create a track with many sub-tasks to force scrolling
+	m.AllTracks = []data.Track{
+		{TrackID: "many-subs", Type: "feature", Status: "in_progress", Source: "active",
+			Phases: []data.Phase{
+				{Number: 1, Name: "Phase", Tasks: []data.Task{
+					{Name: "Task with many subs", SubTasks: func() []data.SubTask {
+						subs := make([]data.SubTask, 30)
+						for i := range subs {
+							subs[i] = data.SubTask{Name: fmt.Sprintf("Sub-task %d", i+1)}
+						}
+						return subs
+					}()},
+				}},
+			}},
+	}
+	m.Height = 15 // small terminal: maxSub = 15 - 10 = 5
+
+	// Cursor at bottom to force scroll
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenDetail, TrackIdx: 0, PhaseIdx: 0, TaskIdx: 0, Cursor: 10})
+
+	output := m.ViewDetail()
+
+	if !strings.Contains(output, "more above") {
+		t.Error("detail view should show 'more above' indicator when scrolled down")
+	}
+	if !strings.Contains(output, "more below") {
+		t.Error("detail view should show 'more below' indicator when more items exist")
 	}
 }
 
@@ -677,7 +770,7 @@ func TestViewEdit_Content(t *testing.T) {
 	}
 }
 
-func TestViewEdit_CursorOnFirstField(t *testing.T) {
+func TestViewEdit_CursorOnFirstField_NotEditing(t *testing.T) {
 	m := testModelWithTracks()
 	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0, EditFieldIdx: 0})
 
@@ -687,9 +780,21 @@ func TestViewEdit_CursorOnFirstField(t *testing.T) {
 	if !strings.Contains(output, ">") {
 		t.Error("edit view should show cursor '>' on selected field")
 	}
-	// The selected field should have bracket indicators
+	// When not editing, should NOT have bracket indicators
+	if strings.Contains(output, "[<") {
+		t.Error("edit view should NOT show bracket indicators when not editing")
+	}
+}
+
+func TestViewEdit_CursorOnFirstField_Editing(t *testing.T) {
+	m := testModelWithTracks()
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0, EditFieldIdx: 0, Editing: true})
+
+	output := m.ViewEdit()
+
+	// When editing, should have bracket indicators
 	if !strings.Contains(output, "[<") {
-		t.Error("edit view should show bracket indicators on selected field")
+		t.Error("edit view should show bracket indicators when editing")
 	}
 }
 
@@ -714,20 +819,37 @@ func TestViewEdit_InvalidTrackIdx(t *testing.T) {
 	}
 }
 
-func TestViewEdit_Footer(t *testing.T) {
+func TestViewEdit_Footer_NotEditing(t *testing.T) {
 	m := testModelWithTracks()
 	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0})
 
 	output := m.ViewEdit()
 
 	if !strings.Contains(output, "Select field") {
-		t.Error("edit footer should contain 'Select field' hint")
+		t.Error("edit footer (not editing) should contain 'Select field' hint")
 	}
+	if !strings.Contains(output, "[Enter] Edit") {
+		t.Error("edit footer (not editing) should contain '[Enter] Edit' hint")
+	}
+	if !strings.Contains(output, "[Esc] Back") {
+		t.Error("edit footer (not editing) should contain '[Esc] Back' hint")
+	}
+}
+
+func TestViewEdit_Footer_Editing(t *testing.T) {
+	m := testModelWithTracks()
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0, Editing: true})
+
+	output := m.ViewEdit()
+
 	if !strings.Contains(output, "Change value") {
-		t.Error("edit footer should contain 'Change value' hint")
+		t.Error("edit footer (editing) should contain 'Change value' hint")
 	}
-	if !strings.Contains(output, "Esc") {
-		t.Error("edit footer should contain 'Esc' hint")
+	if !strings.Contains(output, "[Enter] Save") {
+		t.Error("edit footer (editing) should contain '[Enter] Save' hint")
+	}
+	if !strings.Contains(output, "Stop editing") {
+		t.Error("edit footer (editing) should contain 'Stop editing' hint")
 	}
 }
 
@@ -777,35 +899,33 @@ func TestMoveEditField_ClampAtBounds(t *testing.T) {
 
 // --- Field Value Cycling Tests ---
 
-func TestHandleKey_EnterCyclesStatusField(t *testing.T) {
+func TestHandleKey_RightCyclesFieldForward_WhenEditing(t *testing.T) {
 	m := testModelWithTracks()
-	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0, EditFieldIdx: 0})
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0, EditFieldIdx: 0, Editing: true})
 
-	// Status starts as "in_progress", Enter should cycle to next value
-	result, _ := m.HandleKey(tea.KeyMsg{Type: tea.KeyEnter})
+	result, _ := m.HandleKey(tea.KeyMsg{Type: tea.KeyRight})
 	updated := result.(Model)
 
 	track := updated.Tracks()[updated.CurrentScreen().TrackIdx]
 	if track.Status == "in_progress" {
-		t.Error("status should have changed from 'in_progress' after Enter")
+		t.Error("status should have changed after right arrow when editing")
 	}
 }
 
-func TestHandleKey_EnterCyclesTypeField(t *testing.T) {
+func TestHandleKey_LeftCyclesFieldBackward_WhenEditing(t *testing.T) {
 	m := testModelWithTracks()
-	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0, EditFieldIdx: 1})
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0, EditFieldIdx: 0, Editing: true})
 
-	// Type starts as "feature", Enter should cycle to next value
-	result, _ := m.HandleKey(tea.KeyMsg{Type: tea.KeyEnter})
+	result, _ := m.HandleKey(tea.KeyMsg{Type: tea.KeyLeft})
 	updated := result.(Model)
 
 	track := updated.Tracks()[updated.CurrentScreen().TrackIdx]
-	if track.Type == "feature" {
-		t.Error("type should have changed from 'feature' after Enter")
+	if track.Status == "in_progress" {
+		t.Error("status should have changed after left arrow when editing")
 	}
 }
 
-func TestHandleKey_RightCyclesFieldForward(t *testing.T) {
+func TestHandleKey_RightDoesNothing_WhenNotEditing(t *testing.T) {
 	m := testModelWithTracks()
 	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0, EditFieldIdx: 0})
 
@@ -813,12 +933,12 @@ func TestHandleKey_RightCyclesFieldForward(t *testing.T) {
 	updated := result.(Model)
 
 	track := updated.Tracks()[updated.CurrentScreen().TrackIdx]
-	if track.Status == "in_progress" {
-		t.Error("status should have changed after right arrow")
+	if track.Status != "in_progress" {
+		t.Errorf("status should remain 'in_progress' when not editing, got %q", track.Status)
 	}
 }
 
-func TestHandleKey_LeftCyclesFieldBackward(t *testing.T) {
+func TestHandleKey_LeftDoesNothing_WhenNotEditing(t *testing.T) {
 	m := testModelWithTracks()
 	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0, EditFieldIdx: 0})
 
@@ -826,8 +946,8 @@ func TestHandleKey_LeftCyclesFieldBackward(t *testing.T) {
 	updated := result.(Model)
 
 	track := updated.Tracks()[updated.CurrentScreen().TrackIdx]
-	if track.Status == "in_progress" {
-		t.Error("status should have changed after left arrow")
+	if track.Status != "in_progress" {
+		t.Errorf("status should remain 'in_progress' when not editing, got %q", track.Status)
 	}
 }
 
@@ -875,19 +995,18 @@ func TestCycleValue_UnknownValue(t *testing.T) {
 
 // --- Persistence Integration Tests ---
 
-func TestHandleKey_EnterOnEditTriggersReload(t *testing.T) {
+func TestHandleKey_RightOnEditWhileEditingCyclesAndSaves(t *testing.T) {
 	m := testModelWithTracks()
-	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0, EditFieldIdx: 0})
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0, EditFieldIdx: 0, Editing: true})
 
-	// After cycling, a reload command should be returned
-	_, cmd := m.HandleKey(tea.KeyMsg{Type: tea.KeyEnter})
+	// Right arrow while editing should cycle value
+	result, _ := m.HandleKey(tea.KeyMsg{Type: tea.KeyRight})
+	updated := result.(Model)
 
-	// When BasePath is "." (no real conductor dir), no save happens but the model
-	// should still update the in-memory state
-	track := m.Tracks()[0]
-	// The track should have been cycled
-	_ = cmd
-	_ = track
+	track := updated.Tracks()[0]
+	if track.Status == "in_progress" {
+		t.Error("status should have cycled from 'in_progress' after right arrow while editing")
+	}
 }
 
 func TestMetadataPath_ActiveTrack(t *testing.T) {
@@ -938,11 +1057,11 @@ func TestPersistence_CycleAndSave(t *testing.T) {
 		t.Fatalf("expected 1 track, got %d", len(m.AllTracks))
 	}
 
-	// Push to edit screen
-	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0, EditFieldIdx: 0})
+	// Push to edit screen with editing active
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0, EditFieldIdx: 0, Editing: true})
 
-	// Cycle status: new -> in_progress
-	result, _ := m.HandleKey(tea.KeyMsg{Type: tea.KeyEnter})
+	// Cycle status: new -> in_progress (using Right arrow while editing)
+	result, _ := m.HandleKey(tea.KeyMsg{Type: tea.KeyRight})
 	updated := result.(Model)
 
 	// Read back from disk
@@ -971,16 +1090,16 @@ func TestPersistence_CycleAndSave(t *testing.T) {
 	}
 }
 
-func TestHandleKey_EscOnEditNoSave(t *testing.T) {
+func TestHandleKey_EscOnEditNotEditingNoSave(t *testing.T) {
 	m := testModelWithTracks()
 	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0, EditFieldIdx: 0})
 
-	// Pressing Esc should return to tracks without triggering save
+	// Pressing Esc when not editing should return to tracks without triggering save
 	result, cmd := m.HandleKey(tea.KeyMsg{Type: tea.KeyEscape})
 	updated := result.(Model)
 
 	if updated.CurrentScreen().ScreenType != ScreenTracks {
-		t.Errorf("expected tracks screen after Esc, got %d", updated.CurrentScreen().ScreenType)
+		t.Errorf("expected tracks screen after Esc (not editing), got %d", updated.CurrentScreen().ScreenType)
 	}
 	if cmd != nil {
 		t.Error("Esc on edit screen should not trigger any command")
@@ -1017,37 +1136,69 @@ func TestViewDetail_InvalidIdx(t *testing.T) {
 	}
 }
 
-// --- Scroll Tests (Detail Screen) ---
+// --- Cursor Navigation Tests (Detail Screen) ---
 
-func TestMoveScroll_Down(t *testing.T) {
+func TestHandleKey_UpDownOnDetailMovesCursor(t *testing.T) {
 	m := testModelWithTracks()
-	m.Stack = append(m.Stack, Screen{ScreenType: ScreenDetail, TrackIdx: 0, PhaseIdx: 0, TaskIdx: 1})
-
-	m.MoveScroll(1)
-	if m.CurrentScreen().Scroll != 1 {
-		t.Errorf("scroll = %d, want 1", m.CurrentScreen().Scroll)
-	}
-}
-
-func TestMoveScroll_ClampAtTop(t *testing.T) {
-	m := testModelWithTracks()
-	m.Stack = append(m.Stack, Screen{ScreenType: ScreenDetail, TrackIdx: 0, PhaseIdx: 0, TaskIdx: 1})
-
-	m.MoveScroll(-1)
-	if m.CurrentScreen().Scroll != 0 {
-		t.Errorf("scroll should clamp at 0, got %d", m.CurrentScreen().Scroll)
-	}
-}
-
-func TestHandleKey_UpDownOnDetailScrolls(t *testing.T) {
-	m := testModelWithTracks()
+	// Task at index 1 has 2 sub-tasks: "Add framework", "Add linter"
 	m.Stack = append(m.Stack, Screen{ScreenType: ScreenDetail, TrackIdx: 0, PhaseIdx: 0, TaskIdx: 1})
 
 	result, _ := m.HandleKey(tea.KeyMsg{Type: tea.KeyDown})
 	updated := result.(Model)
 
-	if updated.CurrentScreen().Scroll != 1 {
-		t.Errorf("scroll = %d, want 1 after down on detail", updated.CurrentScreen().Scroll)
+	if updated.CurrentScreen().Cursor != 1 {
+		t.Errorf("cursor = %d, want 1 after down on detail", updated.CurrentScreen().Cursor)
+	}
+
+	// Move back up
+	result, _ = updated.HandleKey(tea.KeyMsg{Type: tea.KeyUp})
+	updated = result.(Model)
+
+	if updated.CurrentScreen().Cursor != 0 {
+		t.Errorf("cursor = %d, want 0 after up on detail", updated.CurrentScreen().Cursor)
+	}
+}
+
+func TestHandleKey_DetailCursorClampsAtBounds(t *testing.T) {
+	m := testModelWithTracks()
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenDetail, TrackIdx: 0, PhaseIdx: 0, TaskIdx: 1})
+
+	// Try to go above 0
+	result, _ := m.HandleKey(tea.KeyMsg{Type: tea.KeyUp})
+	updated := result.(Model)
+
+	if updated.CurrentScreen().Cursor != 0 {
+		t.Errorf("cursor should clamp at 0, got %d", updated.CurrentScreen().Cursor)
+	}
+
+	// Move to last sub-task (index 1) and try to go past it
+	result, _ = updated.HandleKey(tea.KeyMsg{Type: tea.KeyDown})
+	updated = result.(Model)
+	result, _ = updated.HandleKey(tea.KeyMsg{Type: tea.KeyDown})
+	updated = result.(Model)
+
+	if updated.CurrentScreen().Cursor != 1 {
+		t.Errorf("cursor should clamp at 1, got %d", updated.CurrentScreen().Cursor)
+	}
+}
+
+func TestItemCount_DetailScreen(t *testing.T) {
+	m := testModelWithTracks()
+	// Task at index 1 has 2 sub-tasks
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenDetail, TrackIdx: 0, PhaseIdx: 0, TaskIdx: 1})
+
+	if m.ItemCount() != 2 {
+		t.Errorf("ItemCount for detail = %d, want 2 (sub-tasks)", m.ItemCount())
+	}
+}
+
+func TestItemCount_DetailScreenNoSubTasks(t *testing.T) {
+	m := testModelWithTracks()
+	// Task at index 0 has no sub-tasks
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenDetail, TrackIdx: 0, PhaseIdx: 0, TaskIdx: 0})
+
+	if m.ItemCount() != 0 {
+		t.Errorf("ItemCount for detail with no sub-tasks = %d, want 0", m.ItemCount())
 	}
 }
 

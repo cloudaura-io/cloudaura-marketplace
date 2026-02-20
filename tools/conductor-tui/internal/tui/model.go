@@ -32,7 +32,8 @@ type Screen struct {
 	TrackIdx     int
 	PhaseIdx     int
 	TaskIdx      int
-	EditFieldIdx int // index of the currently selected field in edit screen
+	EditFieldIdx int  // index of the currently selected field in edit screen
+	Editing      bool // true when actively editing a field value in the edit screen
 }
 
 // Model is the Bubble Tea model for the Conductor TUI.
@@ -157,6 +158,11 @@ func (m Model) ItemCount() int {
 	case ScreenTasks:
 		if s.TrackIdx < len(tracks) && s.PhaseIdx < len(tracks[s.TrackIdx].Phases) {
 			return len(tracks[s.TrackIdx].Phases[s.PhaseIdx].Tasks)
+		}
+	case ScreenDetail:
+		if s.TrackIdx < len(tracks) && s.PhaseIdx < len(tracks[s.TrackIdx].Phases) &&
+			s.TaskIdx < len(tracks[s.TrackIdx].Phases[s.PhaseIdx].Tasks) {
+			return len(tracks[s.TrackIdx].Phases[s.PhaseIdx].Tasks[s.TaskIdx].SubTasks)
 		}
 	case ScreenEdit:
 		return EditFieldCount
