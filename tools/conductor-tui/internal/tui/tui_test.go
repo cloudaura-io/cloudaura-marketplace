@@ -637,6 +637,132 @@ func TestViewQuit(t *testing.T) {
 	}
 }
 
+// --- Edit Screen View Tests ---
+
+func TestViewEdit_Content(t *testing.T) {
+	m := testModelWithTracks()
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0})
+
+	output := m.ViewEdit()
+
+	if !strings.Contains(output, "feature-auth") {
+		t.Error("edit view should contain track ID in breadcrumb")
+	}
+	if !strings.Contains(output, "Edit") {
+		t.Error("edit view should contain 'Edit' in breadcrumb")
+	}
+	if !strings.Contains(output, "Status") {
+		t.Error("edit view should contain 'Status' field label")
+	}
+	if !strings.Contains(output, "Type") {
+		t.Error("edit view should contain 'Type' field label")
+	}
+	if !strings.Contains(output, "in_progress") {
+		t.Error("edit view should show current status value 'in_progress'")
+	}
+	if !strings.Contains(output, "feature") {
+		t.Error("edit view should show current type value 'feature'")
+	}
+}
+
+func TestViewEdit_CursorOnFirstField(t *testing.T) {
+	m := testModelWithTracks()
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0, EditFieldIdx: 0})
+
+	output := m.ViewEdit()
+
+	// The selected field should have the cursor indicator
+	if !strings.Contains(output, ">") {
+		t.Error("edit view should show cursor '>' on selected field")
+	}
+	// The selected field should have bracket indicators
+	if !strings.Contains(output, "[<") {
+		t.Error("edit view should show bracket indicators on selected field")
+	}
+}
+
+func TestViewEdit_CursorOnSecondField(t *testing.T) {
+	m := testModelWithTracks()
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 1, EditFieldIdx: 1})
+
+	output := m.ViewEdit()
+
+	if !strings.Contains(output, "bugfix-login") {
+		t.Error("edit view should show second track's ID")
+	}
+}
+
+func TestViewEdit_InvalidTrackIdx(t *testing.T) {
+	m := testModelWithTracks()
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 99})
+
+	output := m.ViewEdit()
+	if output != "" {
+		t.Errorf("ViewEdit with invalid TrackIdx should return empty string, got %q", output)
+	}
+}
+
+func TestViewEdit_Footer(t *testing.T) {
+	m := testModelWithTracks()
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0})
+
+	output := m.ViewEdit()
+
+	if !strings.Contains(output, "Select field") {
+		t.Error("edit footer should contain 'Select field' hint")
+	}
+	if !strings.Contains(output, "Change value") {
+		t.Error("edit footer should contain 'Change value' hint")
+	}
+	if !strings.Contains(output, "Esc") {
+		t.Error("edit footer should contain 'Esc' hint")
+	}
+}
+
+func TestViewEdit_UpDownNavigatesFields(t *testing.T) {
+	m := testModelWithTracks()
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0, EditFieldIdx: 0})
+
+	// Move down
+	result, _ := m.HandleKey(tea.KeyMsg{Type: tea.KeyDown})
+	updated := result.(Model)
+
+	if updated.CurrentScreen().EditFieldIdx != 1 {
+		t.Errorf("EditFieldIdx = %d, want 1 after down", updated.CurrentScreen().EditFieldIdx)
+	}
+
+	// Move up
+	result, _ = updated.HandleKey(tea.KeyMsg{Type: tea.KeyUp})
+	updated = result.(Model)
+
+	if updated.CurrentScreen().EditFieldIdx != 0 {
+		t.Errorf("EditFieldIdx = %d, want 0 after up", updated.CurrentScreen().EditFieldIdx)
+	}
+}
+
+func TestMoveEditField_ClampAtBounds(t *testing.T) {
+	m := testModelWithTracks()
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0, EditFieldIdx: 0})
+
+	// Try to go above 0
+	m.MoveEditField(-1)
+	if m.CurrentScreen().EditFieldIdx != 0 {
+		t.Errorf("EditFieldIdx = %d, want 0 (clamped at top)", m.CurrentScreen().EditFieldIdx)
+	}
+
+	// Move to last field
+	m.MoveEditField(1)
+	if m.CurrentScreen().EditFieldIdx != 1 {
+		t.Errorf("EditFieldIdx = %d, want 1", m.CurrentScreen().EditFieldIdx)
+	}
+
+	// Try to go past last field
+	m.MoveEditField(1)
+	if m.CurrentScreen().EditFieldIdx != 1 {
+		t.Errorf("EditFieldIdx = %d, want 1 (clamped at bottom)", m.CurrentScreen().EditFieldIdx)
+	}
+}
+
 func TestViewPhases_InvalidTrackIdx(t *testing.T) {
 	m := testModelWithTracks()
 	m.Stack = append(m.Stack, Screen{ScreenType: ScreenPhases, TrackIdx: 99})
