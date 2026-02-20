@@ -2,5 +2,7 @@
   "track_id": "feature-auth_20260101",
   "type": "feature",
   "status": "in_progress",
-  "description": "Add authentication system"
+  "description": "Add authentication system",
+  "created_at": "2026-01-01T10:00:00Z",
+  "updated_at": "2026-01-15T14:30:00Z"
 }
