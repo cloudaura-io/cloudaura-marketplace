@@ -121,6 +121,27 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // EditFieldCount is the number of editable fields on the edit screen.
 const EditFieldCount = 2
 
+// StatusValues defines the cycle order for the Status field.
+var StatusValues = []string{"new", "in_progress", "completed", "cancelled"}
+
+// TypeValues defines the cycle order for the Type field.
+var TypeValues = []string{"feature", "bug", "chore", "refactor"}
+
+// CycleValue returns the next value in the cycle, moving by delta steps.
+// If the current value is not found, returns the first value in the list.
+func CycleValue(values []string, current string, delta int) string {
+	for i, v := range values {
+		if v == current {
+			next := (i + delta) % len(values)
+			if next < 0 {
+				next += len(values)
+			}
+			return values[next]
+		}
+	}
+	return values[0]
+}
+
 // ItemCount returns the number of items in the current screen's list.
 func (m Model) ItemCount() int {
 	s := m.CurrentScreen()

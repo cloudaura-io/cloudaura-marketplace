@@ -42,7 +42,19 @@ func (m Model) HandleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.MoveCursor(1)
 		}
 	case "enter":
-		m.handleEnter(tracks)
+		if s.ScreenType == ScreenEdit {
+			m.cycleEditField(1)
+		} else {
+			m.handleEnter(tracks)
+		}
+	case "right":
+		if s.ScreenType == ScreenEdit {
+			m.cycleEditField(1)
+		}
+	case "left":
+		if s.ScreenType == ScreenEdit {
+			m.cycleEditField(-1)
+		}
 	case "esc":
 		if len(m.Stack) > 1 {
 			m.Stack = m.Stack[:len(m.Stack)-1]
@@ -66,6 +78,38 @@ func (m Model) HandleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 	}
 	return m, nil
+}
+
+// cycleEditField cycles the value of the currently selected edit field.
+func (m *Model) cycleEditField(delta int) {
+	s := m.CurrentScreen()
+	tracks := m.Tracks()
+	if s.TrackIdx >= len(tracks) {
+		return
+	}
+	track := &m.AllTracks[m.resolveTrackIndex(s.TrackIdx)]
+
+	switch s.EditFieldIdx {
+	case 0: // Status
+		track.Status = CycleValue(StatusValues, track.Status, delta)
+	case 1: // Type
+		track.Type = CycleValue(TypeValues, track.Type, delta)
+	}
+}
+
+// resolveTrackIndex maps a filtered track index to the AllTracks index.
+func (m *Model) resolveTrackIndex(filteredIdx int) int {
+	tracks := m.Tracks()
+	if filteredIdx >= len(tracks) {
+		return 0
+	}
+	target := tracks[filteredIdx]
+	for i, t := range m.AllTracks {
+		if t.TrackID == target.TrackID {
+			return i
+		}
+	}
+	return 0
 }
 
 func (m *Model) handleEnter(tracks []data.Track) {
