@@ -763,6 +763,104 @@ func TestMoveEditField_ClampAtBounds(t *testing.T) {
 	}
 }
 
+// --- Field Value Cycling Tests ---
+
+func TestHandleKey_EnterCyclesStatusField(t *testing.T) {
+	m := testModelWithTracks()
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0, EditFieldIdx: 0})
+
+	// Status starts as "in_progress", Enter should cycle to next value
+	result, _ := m.HandleKey(tea.KeyMsg{Type: tea.KeyEnter})
+	updated := result.(Model)
+
+	track := updated.Tracks()[updated.CurrentScreen().TrackIdx]
+	if track.Status == "in_progress" {
+		t.Error("status should have changed from 'in_progress' after Enter")
+	}
+}
+
+func TestHandleKey_EnterCyclesTypeField(t *testing.T) {
+	m := testModelWithTracks()
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0, EditFieldIdx: 1})
+
+	// Type starts as "feature", Enter should cycle to next value
+	result, _ := m.HandleKey(tea.KeyMsg{Type: tea.KeyEnter})
+	updated := result.(Model)
+
+	track := updated.Tracks()[updated.CurrentScreen().TrackIdx]
+	if track.Type == "feature" {
+		t.Error("type should have changed from 'feature' after Enter")
+	}
+}
+
+func TestHandleKey_RightCyclesFieldForward(t *testing.T) {
+	m := testModelWithTracks()
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0, EditFieldIdx: 0})
+
+	result, _ := m.HandleKey(tea.KeyMsg{Type: tea.KeyRight})
+	updated := result.(Model)
+
+	track := updated.Tracks()[updated.CurrentScreen().TrackIdx]
+	if track.Status == "in_progress" {
+		t.Error("status should have changed after right arrow")
+	}
+}
+
+func TestHandleKey_LeftCyclesFieldBackward(t *testing.T) {
+	m := testModelWithTracks()
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0, EditFieldIdx: 0})
+
+	result, _ := m.HandleKey(tea.KeyMsg{Type: tea.KeyLeft})
+	updated := result.(Model)
+
+	track := updated.Tracks()[updated.CurrentScreen().TrackIdx]
+	if track.Status == "in_progress" {
+		t.Error("status should have changed after left arrow")
+	}
+}
+
+func TestCycleStatusValues(t *testing.T) {
+	// Test the full cycle: new -> in_progress -> completed -> cancelled -> new
+	values := StatusValues
+	for i, v := range values {
+		next := CycleValue(values, v, 1)
+		expected := values[(i+1)%len(values)]
+		if next != expected {
+			t.Errorf("CycleValue(%q, 1) = %q, want %q", v, next, expected)
+		}
+	}
+}
+
+func TestCycleTypeValues(t *testing.T) {
+	// Test the full cycle: feature -> bug -> chore -> refactor -> feature
+	values := TypeValues
+	for i, v := range values {
+		next := CycleValue(values, v, 1)
+		expected := values[(i+1)%len(values)]
+		if next != expected {
+			t.Errorf("CycleValue(%q, 1) = %q, want %q", v, next, expected)
+		}
+	}
+}
+
+func TestCycleValue_Backward(t *testing.T) {
+	values := StatusValues
+	// Cycling backward from "new" should give "cancelled"
+	result := CycleValue(values, "new", -1)
+	if result != "cancelled" {
+		t.Errorf("CycleValue('new', -1) = %q, want %q", result, "cancelled")
+	}
+}
+
+func TestCycleValue_UnknownValue(t *testing.T) {
+	values := StatusValues
+	// Unknown value should default to first value
+	result := CycleValue(values, "unknown_value", 1)
+	if result != values[0] {
+		t.Errorf("CycleValue('unknown_value', 1) = %q, want %q", result, values[0])
+	}
+}
+
 func TestViewPhases_InvalidTrackIdx(t *testing.T) {
 	m := testModelWithTracks()
 	m.Stack = append(m.Stack, Screen{ScreenType: ScreenPhases, TrackIdx: 99})
