@@ -57,11 +57,26 @@ func DiscoverTracks(basePath string) []Track {
 		}
 	}
 
-	// Sort: active first, then alphabetical by track_id within each group
+	return SortTracks(tracks)
+}
+
+// SortTracks sorts tracks: active before archived, then by creation date
+// (newest first) within each group. Tracks with missing created_at are
+// sorted to the bottom of their group.
+func SortTracks(tracks []Track) []Track {
 	sort.Slice(tracks, func(i, j int) bool {
 		if tracks[i].Source != tracks[j].Source {
 			return tracks[i].Source == "active"
 		}
+		iZero := tracks[i].CreatedAt.IsZero()
+		jZero := tracks[j].CreatedAt.IsZero()
+		if iZero != jZero {
+			return !iZero // tracks with dates come before tracks without
+		}
+		if !iZero && !jZero {
+			return tracks[i].CreatedAt.After(tracks[j].CreatedAt)
+		}
+		// Both zero: fallback to alphabetical by track_id
 		return tracks[i].TrackID < tracks[j].TrackID
 	})
 

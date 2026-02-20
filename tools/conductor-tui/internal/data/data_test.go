@@ -290,9 +290,10 @@ func TestDiscoverTracks_AllTracks(t *testing.T) {
 		t.Fatalf("got %d tracks, want 3", len(tracks))
 	}
 
-	// Active tracks should come first, sorted alphabetically
+	// Active tracks should come first, sorted by creation date (newest first)
+	// bugfix-beta (2026-01-02) is newer than feature-alpha (2026-01-01)
 	if tracks[0].TrackID != "bugfix-beta_20260102" {
-		t.Errorf("tracks[0].TrackID = %q, want %q", tracks[0].TrackID, "bugfix-beta_20260102")
+		t.Errorf("tracks[0].TrackID = %q, want %q (newest active first)", tracks[0].TrackID, "bugfix-beta_20260102")
 	}
 	if tracks[0].Source != "active" {
 		t.Errorf("tracks[0].Source = %q, want %q", tracks[0].Source, "active")
@@ -374,6 +375,54 @@ func TestDiscoverTracks_FilterArchived(t *testing.T) {
 		if tr.Source == "archived" {
 			t.Error("found archived track after filtering")
 		}
+	}
+}
+
+func TestDiscoverTracks_SortByCreationDate(t *testing.T) {
+	tracks := DiscoverTracks("../../testdata/discovery")
+
+	// Active tracks should be sorted newest first
+	var activeTracks []Track
+	for _, tr := range tracks {
+		if tr.Source == "active" {
+			activeTracks = append(activeTracks, tr)
+		}
+	}
+
+	if len(activeTracks) < 2 {
+		t.Fatalf("expected at least 2 active tracks, got %d", len(activeTracks))
+	}
+
+	// bugfix-beta (2026-01-02) should come before feature-alpha (2026-01-01)
+	if activeTracks[0].TrackID != "bugfix-beta_20260102" {
+		t.Errorf("first active track = %q, want %q (newest first)", activeTracks[0].TrackID, "bugfix-beta_20260102")
+	}
+	if activeTracks[1].TrackID != "feature-alpha_20260101" {
+		t.Errorf("second active track = %q, want %q", activeTracks[1].TrackID, "feature-alpha_20260101")
+	}
+}
+
+func TestDiscoverTracks_MissingCreatedAtSortedToBottom(t *testing.T) {
+	// Tracks without created_at should sort to the bottom of their group.
+	// In the current testdata, all tracks have created_at, so this tests the
+	// sort logic via a unit test on the sort function directly.
+	tracks := []Track{
+		{TrackID: "has-date", Source: "active", CreatedAt: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)},
+		{TrackID: "no-date", Source: "active"},
+		{TrackID: "newer-date", Source: "active", CreatedAt: time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC)},
+	}
+
+	sorted := SortTracks(tracks)
+
+	// newer-date first, then has-date, then no-date (zero time at bottom)
+	if sorted[0].TrackID != "newer-date" {
+		t.Errorf("sorted[0] = %q, want %q", sorted[0].TrackID, "newer-date")
+	}
+	if sorted[1].TrackID != "has-date" {
+		t.Errorf("sorted[1] = %q, want %q", sorted[1].TrackID, "has-date")
+	}
+	if sorted[2].TrackID != "no-date" {
+		t.Errorf("sorted[2] = %q, want %q", sorted[2].TrackID, "no-date")
 	}
 }
 

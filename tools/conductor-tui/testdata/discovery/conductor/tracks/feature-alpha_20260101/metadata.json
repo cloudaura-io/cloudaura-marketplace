@@ -2,5 +2,6 @@
   "track_id": "feature-alpha_20260101",
   "type": "feature",
   "status": "in_progress",
-  "description": "Alpha feature"
+  "description": "Alpha feature",
+  "created_at": "2026-01-01T10:00:00Z"
 }
