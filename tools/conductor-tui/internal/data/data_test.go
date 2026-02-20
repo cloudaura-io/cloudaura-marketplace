@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestLoadMetadata_Valid(t *testing.T) {
@@ -81,6 +82,43 @@ func TestLoadMetadata_FallbackTrackID(t *testing.T) {
 	}
 	if track.Type != "bug" {
 		t.Errorf("Type = %q, want %q", track.Type, "bug")
+	}
+}
+
+func TestLoadMetadata_CreatedAt(t *testing.T) {
+	data, err := os.ReadFile("../../testdata/valid_metadata.json")
+	if err != nil {
+		t.Fatalf("failed to read test file: %v", err)
+	}
+
+	track, err := LoadMetadata(data)
+	if err != nil {
+		t.Fatalf("LoadMetadata returned error: %v", err)
+	}
+
+	expected := time.Date(2026, 1, 1, 10, 0, 0, 0, time.UTC)
+	if !track.CreatedAt.Equal(expected) {
+		t.Errorf("CreatedAt = %v, want %v", track.CreatedAt, expected)
+	}
+
+	expectedUpdated := time.Date(2026, 1, 15, 14, 30, 0, 0, time.UTC)
+	if !track.UpdatedAt.Equal(expectedUpdated) {
+		t.Errorf("UpdatedAt = %v, want %v", track.UpdatedAt, expectedUpdated)
+	}
+}
+
+func TestLoadMetadata_MissingCreatedAt(t *testing.T) {
+	data := []byte(`{"track_id": "test", "type": "bug"}`)
+	track, err := LoadMetadata(data)
+	if err != nil {
+		t.Fatalf("LoadMetadata returned error: %v", err)
+	}
+
+	if !track.CreatedAt.IsZero() {
+		t.Errorf("CreatedAt should be zero value when missing, got %v", track.CreatedAt)
+	}
+	if !track.UpdatedAt.IsZero() {
+		t.Errorf("UpdatedAt should be zero value when missing, got %v", track.UpdatedAt)
 	}
 }
 

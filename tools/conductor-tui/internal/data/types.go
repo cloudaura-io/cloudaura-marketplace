@@ -2,6 +2,8 @@
 // Conductor track metadata and plan files.
 package data
 
+import "time"
+
 // SubTask represents a sub-task within a task.
 type SubTask struct {
 	Name      string
@@ -31,5 +33,7 @@ type Track struct {
 	Status      string
 	Description string
 	Source      string // "active" or "archived"
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 	Phases      []Phase
 }
