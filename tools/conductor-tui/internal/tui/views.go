@@ -72,15 +72,7 @@ func (m Model) ViewTracks() string {
 		maxVis = 1
 	}
 
-	scroll := s.Cursor - maxVis + 1
-	if scroll < 0 {
-		scroll = 0
-	}
-	end := scroll + maxVis
-	if end > len(tracks) {
-		end = len(tracks)
-	}
-	visible := tracks[scroll:end]
+	vp := util.CalcViewport(len(tracks), s.Cursor, maxVis)
 
 	descW := m.Width - 64
 	if descW < 8 {
@@ -90,8 +82,13 @@ func (m Model) ViewTracks() string {
 	// Column headers
 	b.WriteString(DimStyle.Render("  "+util.Pad("Track ID", 28)+util.Pad("Type", 10)+util.Pad("Status", 14)+util.Pad("Phases", 8)+"Description") + "\n")
 
+	if vp.MoreAbove > 0 {
+		b.WriteString(DimStyle.Render(fmt.Sprintf("  ↑ %d more above", vp.MoreAbove)) + "\n")
+	}
+
+	visible := tracks[vp.Start:vp.End]
 	for i, t := range visible {
-		idx := scroll + i
+		idx := vp.Start + i
 		sel := idx == s.Cursor
 
 		tag := ""
@@ -120,6 +117,10 @@ func (m Model) ViewTracks() string {
 		b.WriteString(line + "\n")
 	}
 
+	if vp.MoreBelow > 0 {
+		b.WriteString(DimStyle.Render(fmt.Sprintf("  ↓ %d more below", vp.MoreBelow)) + "\n")
+	}
+
 	archiveHint := "Show"
 	if m.ShowArchived {
 		archiveHint = "Hide"
@@ -141,27 +142,24 @@ func (m Model) ViewPhases() string {
 
 	var b strings.Builder
 	b.WriteString(m.RenderHeader([]string{track.TrackID}, "[Esc] Back"))
-	b.WriteString(" " + DimStyle.Render(track.Description) + "\n")
+	b.WriteString(" " + DimStyle.Render(util.Wrap(track.Description, m.Width-2, " ")) + "\n")
 
 	maxVis := m.Height - 7
 	if maxVis < 1 {
 		maxVis = 1
 	}
 
-	scroll := s.Cursor - maxVis + 1
-	if scroll < 0 {
-		scroll = 0
-	}
-	end := scroll + maxVis
-	if end > len(track.Phases) {
-		end = len(track.Phases)
-	}
-	visible := track.Phases[scroll:end]
+	vp := util.CalcViewport(len(track.Phases), s.Cursor, maxVis)
 
 	b.WriteString(DimStyle.Render("  "+util.Pad("#", 4)+util.Pad("Phase", 34)+util.Pad("Tasks", 10)+"Status") + "\n")
 
+	if vp.MoreAbove > 0 {
+		b.WriteString(DimStyle.Render(fmt.Sprintf("  ↑ %d more above", vp.MoreAbove)) + "\n")
+	}
+
+	visible := track.Phases[vp.Start:vp.End]
 	for i, p := range visible {
-		idx := scroll + i
+		idx := vp.Start + i
 		sel := idx == s.Cursor
 
 		done := 0
@@ -191,6 +189,10 @@ func (m Model) ViewPhases() string {
 		b.WriteString(line + "\n")
 	}
 
+	if vp.MoreBelow > 0 {
+		b.WriteString(DimStyle.Render(fmt.Sprintf("  ↓ %d more below", vp.MoreBelow)) + "\n")
+	}
+
 	b.WriteString(m.RenderFooter("[↑↓] Navigate  [Enter] View tasks  [Esc] Back"))
 	return b.String()
 }
@@ -211,27 +213,24 @@ func (m Model) ViewTasks() string {
 		[]string{util.Trunc(track.TrackID, 20), fmt.Sprintf("Phase %d", phase.Number)},
 		"[Esc] Back",
 	))
-	b.WriteString(" " + DimStyle.Render(phase.Name) + "\n")
+	b.WriteString(" " + DimStyle.Render(util.Wrap(phase.Name, m.Width-2, " ")) + "\n")
 
 	maxVis := m.Height - 7
 	if maxVis < 1 {
 		maxVis = 1
 	}
 
-	scroll := s.Cursor - maxVis + 1
-	if scroll < 0 {
-		scroll = 0
-	}
-	end := scroll + maxVis
-	if end > len(phase.Tasks) {
-		end = len(phase.Tasks)
-	}
-	visible := phase.Tasks[scroll:end]
+	vp := util.CalcViewport(len(phase.Tasks), s.Cursor, maxVis)
 
-	b.WriteString(DimStyle.Render("  "+util.Pad("#", 4)+util.Pad("Task", 42)+util.Pad("Status", 10)+"Commit") + "\n")
+	b.WriteString(DimStyle.Render("  "+util.Pad("#", 4)+util.Pad("Task", 36)+util.Pad("Subs", 8)+util.Pad("Status", 10)+"Commit") + "\n")
 
+	if vp.MoreAbove > 0 {
+		b.WriteString(DimStyle.Render(fmt.Sprintf("  ↑ %d more above", vp.MoreAbove)) + "\n")
+	}
+
+	visible := phase.Tasks[vp.Start:vp.End]
 	for i, t := range visible {
-		idx := scroll + i
+		idx := vp.Start + i
 		sel := idx == s.Cursor
 
 		st := "pending"
@@ -244,6 +243,13 @@ func (m Model) ViewTasks() string {
 			commit = t.Commit
 		}
 
+		doneSubs := 0
+		for _, sub := range t.SubTasks {
+			if sub.Completed {
+				doneSubs++
+			}
+		}
+
 		prefix := "  "
 		if sel {
 			prefix = CursorStyle.Render("> ")
@@ -253,7 +259,8 @@ func (m Model) ViewTasks() string {
 
 		line := prefix +
 			util.Pad(fmt.Sprintf("%d", idx+1), 4) +
-			util.Pad(util.Trunc(t.Name, 40), 42) +
+			util.Pad(util.Trunc(t.Name, 34), 36) +
+			util.Pad(fmt.Sprintf("%d/%d", doneSubs, len(t.SubTasks)), 8) +
 			statusRendered +
 			commit
 
@@ -261,6 +268,10 @@ func (m Model) ViewTasks() string {
 			line = BoldStyle.Render(line)
 		}
 		b.WriteString(line + "\n")
+	}
+
+	if vp.MoreBelow > 0 {
+		b.WriteString(DimStyle.Render(fmt.Sprintf("  ↓ %d more below", vp.MoreBelow)) + "\n")
 	}
 
 	b.WriteString(m.RenderFooter("[↑↓] Navigate  [Enter] View detail  [Esc] Back"))
@@ -279,7 +290,7 @@ func (m Model) ViewEdit() string {
 
 	var b strings.Builder
 	b.WriteString(m.RenderHeader([]string{track.TrackID, "Edit"}, "[Esc] Back"))
-	b.WriteString(" " + DimStyle.Render(track.Description) + "\n\n")
+	b.WriteString(" " + DimStyle.Render(util.Wrap(track.Description, m.Width-2, " ")) + "\n\n")
 
 	fields := []struct {
 		label string
@@ -297,14 +308,18 @@ func (m Model) ViewEdit() string {
 
 		label := BoldStyle.Render(util.Pad(f.label+":", 10))
 		value := ColorStyle(util.StatusColor(f.value)).Render(f.value)
-		if i == s.EditFieldIdx {
+		if i == s.EditFieldIdx && s.Editing {
 			value = "[< " + value + " >]"
 		}
 
 		b.WriteString(prefix + label + value + "\n")
 	}
 
-	b.WriteString(m.RenderFooter("[Up/Down] Select field  [Enter/Left/Right] Change value  [Esc] Back"))
+	if s.Editing {
+		b.WriteString(m.RenderFooter("[Left/Right] Change value  [Enter] Save  [Up/Down] Select field  [Esc] Stop editing"))
+	} else {
+		b.WriteString(m.RenderFooter("[Up/Down] Select field  [Enter] Edit  [Esc] Back"))
+	}
 	return b.String()
 }
 
@@ -337,7 +352,7 @@ func (m Model) ViewDetail() string {
 		"[Esc] Back",
 	))
 
-	b.WriteString(" " + BoldStyle.Render("Task: ") + task.Name + "\n")
+	b.WriteString(" " + BoldStyle.Render("Task: ") + util.Wrap(task.Name, m.Width-8, "        ") + "\n")
 
 	statusLine := " Status: " + ColorStyle(util.StatusColor(st)).Render(st)
 	if task.Commit != "" {
@@ -348,40 +363,42 @@ func (m Model) ViewDetail() string {
 	if len(task.SubTasks) == 0 {
 		b.WriteString(" " + DimStyle.Render("No sub-tasks.") + "\n")
 	} else {
-		b.WriteString(" " + BoldStyle.Render("Sub-tasks:") + "\n")
+		b.WriteString(" " + BoldStyle.Render(fmt.Sprintf("Sub-tasks: (%d)", len(task.SubTasks))) + "\n")
 
 		maxSub := m.Height - 10
 		if maxSub < 1 {
 			maxSub = 1
 		}
 
-		scrollIdx := s.Scroll
-		maxScroll := len(task.SubTasks) - maxSub
-		if maxScroll < 0 {
-			maxScroll = 0
-		}
-		if scrollIdx > maxScroll {
-			scrollIdx = maxScroll
+		vp := util.CalcViewport(len(task.SubTasks), s.Cursor, maxSub)
+
+		if vp.MoreAbove > 0 {
+			b.WriteString(DimStyle.Render(fmt.Sprintf("    ↑ %d more above", vp.MoreAbove)) + "\n")
 		}
 
-		end := scrollIdx + maxSub
-		if end > len(task.SubTasks) {
-			end = len(task.SubTasks)
-		}
-		visibleSubs := task.SubTasks[scrollIdx:end]
+		visibleSubs := task.SubTasks[vp.Start:vp.End]
 
-		for _, sub := range visibleSubs {
+		for i, sub := range visibleSubs {
+			idx := vp.Start + i
 			check := "[ ]"
 			if sub.Completed {
 				check = ColorStyle("green").Render("[x]")
 			}
-			b.WriteString("    " + check + " " + sub.Name + "\n")
+			prefix := "  "
+			if idx == s.Cursor {
+				prefix = CursorStyle.Render("> ")
+			}
+			b.WriteString("  " + prefix + check + " " + util.Wrap(sub.Name, m.Width-11, "            ") + "\n")
+		}
+
+		if vp.MoreBelow > 0 {
+			b.WriteString(DimStyle.Render(fmt.Sprintf("    ↓ %d more below", vp.MoreBelow)) + "\n")
 		}
 	}
 
 	footerText := "[Esc] Back"
-	if len(task.SubTasks) > m.Height-10 {
-		footerText = "[↑↓] Scroll  [Esc] Back"
+	if len(task.SubTasks) > 0 {
+		footerText = "[↑↓] Navigate  [Esc] Back"
 	}
 	b.WriteString(m.RenderFooter(footerText))
 	return b.String()
