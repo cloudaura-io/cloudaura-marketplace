@@ -122,6 +122,137 @@ func TestLoadMetadata_MissingCreatedAt(t *testing.T) {
 	}
 }
 
+func TestSaveMetadata_WritesFile(t *testing.T) {
+	dir := t.TempDir()
+	metaPath := filepath.Join(dir, "metadata.json")
+
+	track := Track{
+		TrackID:     "test-track",
+		Type:        "feature",
+		Status:      "in_progress",
+		Description: "Test track",
+		CreatedAt:   time.Date(2026, 1, 1, 10, 0, 0, 0, time.UTC),
+	}
+
+	err := SaveMetadata(metaPath, track)
+	if err != nil {
+		t.Fatalf("SaveMetadata returned error: %v", err)
+	}
+
+	// Read back and verify
+	data, err := os.ReadFile(metaPath)
+	if err != nil {
+		t.Fatalf("failed to read written file: %v", err)
+	}
+
+	loaded, err := LoadMetadata(data)
+	if err != nil {
+		t.Fatalf("LoadMetadata of written file returned error: %v", err)
+	}
+
+	if loaded.TrackID != "test-track" {
+		t.Errorf("TrackID = %q, want %q", loaded.TrackID, "test-track")
+	}
+	if loaded.Type != "feature" {
+		t.Errorf("Type = %q, want %q", loaded.Type, "feature")
+	}
+	if loaded.Status != "in_progress" {
+		t.Errorf("Status = %q, want %q", loaded.Status, "in_progress")
+	}
+	if loaded.Description != "Test track" {
+		t.Errorf("Description = %q, want %q", loaded.Description, "Test track")
+	}
+}
+
+func TestSaveMetadata_UpdatesTimestamp(t *testing.T) {
+	dir := t.TempDir()
+	metaPath := filepath.Join(dir, "metadata.json")
+
+	track := Track{
+		TrackID:   "test-track",
+		Type:      "bug",
+		Status:    "new",
+		CreatedAt: time.Date(2026, 1, 1, 10, 0, 0, 0, time.UTC),
+		UpdatedAt: time.Date(2026, 1, 1, 10, 0, 0, 0, time.UTC),
+	}
+
+	before := time.Now().UTC().Truncate(time.Second)
+	err := SaveMetadata(metaPath, track)
+	if err != nil {
+		t.Fatalf("SaveMetadata returned error: %v", err)
+	}
+
+	data, err := os.ReadFile(metaPath)
+	if err != nil {
+		t.Fatalf("failed to read written file: %v", err)
+	}
+
+	loaded, err := LoadMetadata(data)
+	if err != nil {
+		t.Fatalf("LoadMetadata returned error: %v", err)
+	}
+
+	// updated_at should be set to current time (truncated to seconds due to RFC3339)
+	if loaded.UpdatedAt.Before(before) {
+		t.Errorf("UpdatedAt = %v, expected >= %v", loaded.UpdatedAt, before)
+	}
+}
+
+func TestSaveMetadata_PreservesCreatedAt(t *testing.T) {
+	dir := t.TempDir()
+	metaPath := filepath.Join(dir, "metadata.json")
+
+	createdAt := time.Date(2025, 6, 15, 12, 0, 0, 0, time.UTC)
+	track := Track{
+		TrackID:   "test-track",
+		Type:      "chore",
+		Status:    "completed",
+		CreatedAt: createdAt,
+	}
+
+	err := SaveMetadata(metaPath, track)
+	if err != nil {
+		t.Fatalf("SaveMetadata returned error: %v", err)
+	}
+
+	data, err := os.ReadFile(metaPath)
+	if err != nil {
+		t.Fatalf("failed to read written file: %v", err)
+	}
+
+	loaded, err := LoadMetadata(data)
+	if err != nil {
+		t.Fatalf("LoadMetadata returned error: %v", err)
+	}
+
+	if !loaded.CreatedAt.Equal(createdAt) {
+		t.Errorf("CreatedAt = %v, want %v (should be preserved)", loaded.CreatedAt, createdAt)
+	}
+}
+
+func TestSaveMetadata_AtomicWrite(t *testing.T) {
+	dir := t.TempDir()
+	metaPath := filepath.Join(dir, "metadata.json")
+
+	// Write initial content
+	track := Track{TrackID: "test", Type: "feature", Status: "new"}
+	err := SaveMetadata(metaPath, track)
+	if err != nil {
+		t.Fatalf("SaveMetadata returned error: %v", err)
+	}
+
+	// Verify file exists and is valid JSON
+	data, err := os.ReadFile(metaPath)
+	if err != nil {
+		t.Fatalf("failed to read file: %v", err)
+	}
+
+	_, err = LoadMetadata(data)
+	if err != nil {
+		t.Fatalf("written file is not valid metadata: %v", err)
+	}
+}
+
 // --- Plan Parsing Tests ---
 
 func TestParsePlan_FullPlan(t *testing.T) {
