@@ -295,7 +295,7 @@ func TestHandleKey_EscOnPhasesGoesBack(t *testing.T) {
 	}
 }
 
-func TestHandleKey_EnterOnTracksPushesEdit(t *testing.T) {
+func TestHandleKey_EnterOnTracksPushesPhases(t *testing.T) {
 	m := testModelWithTracks()
 
 	result, _ := m.HandleKey(tea.KeyMsg{Type: tea.KeyEnter})
@@ -303,6 +303,23 @@ func TestHandleKey_EnterOnTracksPushesEdit(t *testing.T) {
 
 	if len(updated.Stack) != 2 {
 		t.Fatalf("stack length = %d, want 2 after Enter", len(updated.Stack))
+	}
+	if updated.CurrentScreen().ScreenType != ScreenPhases {
+		t.Errorf("expected phases screen, got %d", updated.CurrentScreen().ScreenType)
+	}
+	if updated.CurrentScreen().TrackIdx != 0 {
+		t.Errorf("TrackIdx = %d, want 0", updated.CurrentScreen().TrackIdx)
+	}
+}
+
+func TestHandleKey_EKeyOnTracksPushesEdit(t *testing.T) {
+	m := testModelWithTracks()
+
+	result, _ := m.HandleKey(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}})
+	updated := result.(Model)
+
+	if len(updated.Stack) != 2 {
+		t.Fatalf("stack length = %d, want 2 after e press", len(updated.Stack))
 	}
 	if updated.CurrentScreen().ScreenType != ScreenEdit {
 		t.Errorf("expected edit screen, got %d", updated.CurrentScreen().ScreenType)
@@ -312,20 +329,14 @@ func TestHandleKey_EnterOnTracksPushesEdit(t *testing.T) {
 	}
 }
 
-func TestHandleKey_PKeyOnTracksPushesPhases(t *testing.T) {
+func TestHandleKey_PKeyOnTracksDoesNothing(t *testing.T) {
 	m := testModelWithTracks()
 
 	result, _ := m.HandleKey(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}})
 	updated := result.(Model)
 
-	if len(updated.Stack) != 2 {
-		t.Fatalf("stack length = %d, want 2 after p press", len(updated.Stack))
-	}
-	if updated.CurrentScreen().ScreenType != ScreenPhases {
-		t.Errorf("expected phases screen, got %d", updated.CurrentScreen().ScreenType)
-	}
-	if updated.CurrentScreen().TrackIdx != 0 {
-		t.Errorf("TrackIdx = %d, want 0", updated.CurrentScreen().TrackIdx)
+	if len(updated.Stack) != 1 {
+		t.Errorf("stack length = %d, want 1 (p key should do nothing on tracks screen)", len(updated.Stack))
 	}
 }
 
@@ -535,17 +546,17 @@ func TestViewTracks_Footer(t *testing.T) {
 	m := testModelWithTracks()
 	output := m.ViewTracks()
 
-	if !strings.Contains(output, "Navigate") {
-		t.Error("footer should contain navigation hint")
+	if !strings.Contains(output, "[Enter] Phases") {
+		t.Error("footer should contain '[Enter] Phases' hint")
 	}
-	if !strings.Contains(output, "Edit") {
-		t.Error("footer should contain 'Edit' hint for Enter key")
-	}
-	if !strings.Contains(output, "Phases") {
-		t.Error("footer should contain 'Phases' hint for p key")
+	if !strings.Contains(output, "[e] Edit") {
+		t.Error("footer should contain '[e] Edit' hint")
 	}
 	if !strings.Contains(output, "Show archived") {
 		t.Error("footer should say 'Show archived' when archived hidden")
+	}
+	if !strings.Contains(output, "[q] Quit") {
+		t.Error("footer should contain '[q] Quit' hint")
 	}
 
 	m.ShowArchived = true

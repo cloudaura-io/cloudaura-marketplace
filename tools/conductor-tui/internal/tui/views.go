@@ -124,7 +124,7 @@ func (m Model) ViewTracks() string {
 	if m.ShowArchived {
 		archiveHint = "Hide"
 	}
-	footer := fmt.Sprintf("[Up/Down] Navigate  [Enter] Edit  [p] Phases  [a] %s archived  [q] Quit", archiveHint)
+	footer := fmt.Sprintf("[Enter] Phases  [e] Edit  [a] %s archived  [q] Quit", archiveHint)
 	b.WriteString(m.RenderFooter(footer))
 	return b.String()
 }
