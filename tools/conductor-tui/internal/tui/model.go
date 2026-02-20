@@ -3,6 +3,7 @@
 package tui
 
 import (
+	"path/filepath"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -178,6 +179,22 @@ func (m *Model) MoveCursor(delta int) {
 		next = 0
 	}
 	s.Cursor = next
+}
+
+// MetadataPath returns the filesystem path to the metadata.json file for
+// the track at the given filtered index.
+func (m Model) MetadataPath(filteredIdx int) string {
+	tracks := m.Tracks()
+	if filteredIdx >= len(tracks) {
+		return ""
+	}
+	track := tracks[filteredIdx]
+
+	dir := "tracks"
+	if track.Source == "archived" {
+		dir = "archive"
+	}
+	return filepath.Join(m.BasePath, "conductor", dir, track.TrackID, "metadata.json")
 }
 
 // MoveEditField moves the edit field index by delta, clamping to valid range.

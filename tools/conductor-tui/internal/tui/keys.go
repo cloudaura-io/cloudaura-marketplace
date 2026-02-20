@@ -44,16 +44,19 @@ func (m Model) HandleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "enter":
 		if s.ScreenType == ScreenEdit {
 			m.cycleEditField(1)
+			m.saveCurrentTrack()
 		} else {
 			m.handleEnter(tracks)
 		}
 	case "right":
 		if s.ScreenType == ScreenEdit {
 			m.cycleEditField(1)
+			m.saveCurrentTrack()
 		}
 	case "left":
 		if s.ScreenType == ScreenEdit {
 			m.cycleEditField(-1)
+			m.saveCurrentTrack()
 		}
 	case "esc":
 		if len(m.Stack) > 1 {
@@ -95,6 +98,22 @@ func (m *Model) cycleEditField(delta int) {
 	case 1: // Type
 		track.Type = CycleValue(TypeValues, track.Type, delta)
 	}
+}
+
+// saveCurrentTrack persists the current track's metadata to disk.
+func (m *Model) saveCurrentTrack() {
+	s := m.CurrentScreen()
+	path := m.MetadataPath(s.TrackIdx)
+	if path == "" {
+		return
+	}
+	tracks := m.Tracks()
+	if s.TrackIdx >= len(tracks) {
+		return
+	}
+	track := tracks[s.TrackIdx]
+	// Best-effort save; errors are silently ignored in the TUI
+	_ = data.SaveMetadata(path, track)
 }
 
 // resolveTrackIndex maps a filtered track index to the AllTracks index.

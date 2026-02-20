@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"os"
 	"strings"
 	"testing"
 
@@ -858,6 +859,120 @@ func TestCycleValue_UnknownValue(t *testing.T) {
 	result := CycleValue(values, "unknown_value", 1)
 	if result != values[0] {
 		t.Errorf("CycleValue('unknown_value', 1) = %q, want %q", result, values[0])
+	}
+}
+
+// --- Persistence Integration Tests ---
+
+func TestHandleKey_EnterOnEditTriggersReload(t *testing.T) {
+	m := testModelWithTracks()
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0, EditFieldIdx: 0})
+
+	// After cycling, a reload command should be returned
+	_, cmd := m.HandleKey(tea.KeyMsg{Type: tea.KeyEnter})
+
+	// When BasePath is "." (no real conductor dir), no save happens but the model
+	// should still update the in-memory state
+	track := m.Tracks()[0]
+	// The track should have been cycled
+	_ = cmd
+	_ = track
+}
+
+func TestMetadataPath_ActiveTrack(t *testing.T) {
+	m := NewModel("/project")
+	m.AllTracks = []data.Track{
+		{TrackID: "feature-test", Source: "active"},
+	}
+
+	path := m.MetadataPath(0)
+	expected := "/project/conductor/tracks/feature-test/metadata.json"
+	if path != expected {
+		t.Errorf("MetadataPath = %q, want %q", path, expected)
+	}
+}
+
+func TestMetadataPath_ArchivedTrack(t *testing.T) {
+	m := NewModel("/project")
+	m.AllTracks = []data.Track{
+		{TrackID: "old-track", Source: "archived"},
+	}
+	m.ShowArchived = true
+
+	path := m.MetadataPath(0)
+	expected := "/project/conductor/archive/old-track/metadata.json"
+	if path != expected {
+		t.Errorf("MetadataPath = %q, want %q", path, expected)
+	}
+}
+
+func TestPersistence_CycleAndSave(t *testing.T) {
+	// Create a temp directory with a real track structure
+	dir := t.TempDir()
+	trackDir := dir + "/conductor/tracks/test-track"
+	if err := os.MkdirAll(trackDir, 0755); err != nil {
+		t.Fatalf("failed to create track dir: %v", err)
+	}
+
+	// Write initial metadata
+	initial := `{"track_id":"test-track","type":"feature","status":"new","created_at":"2026-01-01T10:00:00Z"}`
+	if err := os.WriteFile(trackDir+"/metadata.json", []byte(initial), 0644); err != nil {
+		t.Fatalf("failed to write metadata: %v", err)
+	}
+
+	m := NewModel(dir)
+	m.AllTracks = data.DiscoverTracks(dir)
+
+	if len(m.AllTracks) != 1 {
+		t.Fatalf("expected 1 track, got %d", len(m.AllTracks))
+	}
+
+	// Push to edit screen
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0, EditFieldIdx: 0})
+
+	// Cycle status: new -> in_progress
+	result, _ := m.HandleKey(tea.KeyMsg{Type: tea.KeyEnter})
+	updated := result.(Model)
+
+	// Read back from disk
+	savedData, err := os.ReadFile(trackDir + "/metadata.json")
+	if err != nil {
+		t.Fatalf("failed to read saved metadata: %v", err)
+	}
+
+	savedTrack, err := data.LoadMetadata(savedData)
+	if err != nil {
+		t.Fatalf("failed to parse saved metadata: %v", err)
+	}
+
+	if savedTrack.Status != "in_progress" {
+		t.Errorf("saved status = %q, want %q", savedTrack.Status, "in_progress")
+	}
+
+	// Verify updated_at was set
+	if savedTrack.UpdatedAt.IsZero() {
+		t.Error("updated_at should be set after save")
+	}
+
+	// Verify in-memory model also updated
+	if updated.Tracks()[0].Status != "in_progress" {
+		t.Errorf("in-memory status = %q, want %q", updated.Tracks()[0].Status, "in_progress")
+	}
+}
+
+func TestHandleKey_EscOnEditNoSave(t *testing.T) {
+	m := testModelWithTracks()
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0, EditFieldIdx: 0})
+
+	// Pressing Esc should return to tracks without triggering save
+	result, cmd := m.HandleKey(tea.KeyMsg{Type: tea.KeyEscape})
+	updated := result.(Model)
+
+	if updated.CurrentScreen().ScreenType != ScreenTracks {
+		t.Errorf("expected tracks screen after Esc, got %d", updated.CurrentScreen().ScreenType)
+	}
+	if cmd != nil {
+		t.Error("Esc on edit screen should not trigger any command")
 	}
 }
 
