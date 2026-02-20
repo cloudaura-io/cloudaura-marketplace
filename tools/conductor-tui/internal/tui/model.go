@@ -19,17 +19,19 @@ const (
 	ScreenPhases
 	ScreenTasks
 	ScreenDetail
+	ScreenEdit
 	ScreenQuit
 )
 
 // Screen represents a navigation state in the screen stack.
 type Screen struct {
-	ScreenType int
-	Cursor     int
-	Scroll     int
-	TrackIdx   int
-	PhaseIdx   int
-	TaskIdx    int
+	ScreenType   int
+	Cursor       int
+	Scroll       int
+	TrackIdx     int
+	PhaseIdx     int
+	TaskIdx      int
+	EditFieldIdx int // index of the currently selected field in edit screen
 }
 
 // Model is the Bubble Tea model for the Conductor TUI.
@@ -116,6 +118,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// EditFieldCount is the number of editable fields on the edit screen.
+const EditFieldCount = 2
+
 // ItemCount returns the number of items in the current screen's list.
 func (m Model) ItemCount() int {
 	s := m.CurrentScreen()
@@ -131,6 +136,8 @@ func (m Model) ItemCount() int {
 		if s.TrackIdx < len(tracks) && s.PhaseIdx < len(tracks[s.TrackIdx].Phases) {
 			return len(tracks[s.TrackIdx].Phases[s.PhaseIdx].Tasks)
 		}
+	case ScreenEdit:
+		return EditFieldCount
 	}
 	return 0
 }
@@ -150,6 +157,19 @@ func (m *Model) MoveCursor(delta int) {
 		next = 0
 	}
 	s.Cursor = next
+}
+
+// MoveEditField moves the edit field index by delta, clamping to valid range.
+func (m *Model) MoveEditField(delta int) {
+	s := &m.Stack[len(m.Stack)-1]
+	next := s.EditFieldIdx + delta
+	if next < 0 {
+		next = 0
+	}
+	if next >= EditFieldCount {
+		next = EditFieldCount - 1
+	}
+	s.EditFieldIdx = next
 }
 
 // MoveScroll moves the scroll offset by delta, clamping at zero.

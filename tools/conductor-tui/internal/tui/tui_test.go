@@ -294,7 +294,7 @@ func TestHandleKey_EscOnPhasesGoesBack(t *testing.T) {
 	}
 }
 
-func TestHandleKey_EnterOnTracksPushesPhases(t *testing.T) {
+func TestHandleKey_EnterOnTracksPushesEdit(t *testing.T) {
 	m := testModelWithTracks()
 
 	result, _ := m.HandleKey(tea.KeyMsg{Type: tea.KeyEnter})
@@ -303,11 +303,43 @@ func TestHandleKey_EnterOnTracksPushesPhases(t *testing.T) {
 	if len(updated.Stack) != 2 {
 		t.Fatalf("stack length = %d, want 2 after Enter", len(updated.Stack))
 	}
+	if updated.CurrentScreen().ScreenType != ScreenEdit {
+		t.Errorf("expected edit screen, got %d", updated.CurrentScreen().ScreenType)
+	}
+	if updated.CurrentScreen().TrackIdx != 0 {
+		t.Errorf("TrackIdx = %d, want 0", updated.CurrentScreen().TrackIdx)
+	}
+}
+
+func TestHandleKey_PKeyOnTracksPushesPhases(t *testing.T) {
+	m := testModelWithTracks()
+
+	result, _ := m.HandleKey(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}})
+	updated := result.(Model)
+
+	if len(updated.Stack) != 2 {
+		t.Fatalf("stack length = %d, want 2 after p press", len(updated.Stack))
+	}
 	if updated.CurrentScreen().ScreenType != ScreenPhases {
 		t.Errorf("expected phases screen, got %d", updated.CurrentScreen().ScreenType)
 	}
 	if updated.CurrentScreen().TrackIdx != 0 {
 		t.Errorf("TrackIdx = %d, want 0", updated.CurrentScreen().TrackIdx)
+	}
+}
+
+func TestHandleKey_EscOnEditGoesBack(t *testing.T) {
+	m := testModelWithTracks()
+	m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: 0})
+
+	result, _ := m.HandleKey(tea.KeyMsg{Type: tea.KeyEscape})
+	updated := result.(Model)
+
+	if len(updated.Stack) != 1 {
+		t.Fatalf("stack length = %d, want 1 after Esc on edit", len(updated.Stack))
+	}
+	if updated.CurrentScreen().ScreenType != ScreenTracks {
+		t.Errorf("expected tracks screen, got %d", updated.CurrentScreen().ScreenType)
 	}
 }
 
@@ -504,6 +536,12 @@ func TestViewTracks_Footer(t *testing.T) {
 
 	if !strings.Contains(output, "Navigate") {
 		t.Error("footer should contain navigation hint")
+	}
+	if !strings.Contains(output, "Edit") {
+		t.Error("footer should contain 'Edit' hint for Enter key")
+	}
+	if !strings.Contains(output, "Phases") {
+		t.Error("footer should contain 'Phases' hint for p key")
 	}
 	if !strings.Contains(output, "Show archived") {
 		t.Error("footer should say 'Show archived' when archived hidden")

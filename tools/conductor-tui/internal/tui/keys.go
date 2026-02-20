@@ -28,12 +28,16 @@ func (m Model) HandleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "up":
 		if s.ScreenType == ScreenDetail {
 			m.MoveScroll(-1)
+		} else if s.ScreenType == ScreenEdit {
+			m.MoveEditField(-1)
 		} else {
 			m.MoveCursor(-1)
 		}
 	case "down":
 		if s.ScreenType == ScreenDetail {
 			m.MoveScroll(1)
+		} else if s.ScreenType == ScreenEdit {
+			m.MoveEditField(1)
 		} else {
 			m.MoveCursor(1)
 		}
@@ -50,6 +54,12 @@ func (m Model) HandleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.ShowArchived = !m.ShowArchived
 			m.Stack = []Screen{{ScreenType: ScreenTracks}}
 		}
+	case "p":
+		if s.ScreenType == ScreenTracks {
+			if len(tracks) > 0 && s.Cursor < len(tracks) {
+				m.Stack = append(m.Stack, Screen{ScreenType: ScreenPhases, TrackIdx: s.Cursor})
+			}
+		}
 	case "q":
 		if s.ScreenType == ScreenTracks {
 			m.Stack = append(m.Stack, Screen{ScreenType: ScreenQuit})
@@ -63,7 +73,7 @@ func (m *Model) handleEnter(tracks []data.Track) {
 	switch s.ScreenType {
 	case ScreenTracks:
 		if len(tracks) > 0 && s.Cursor < len(tracks) {
-			m.Stack = append(m.Stack, Screen{ScreenType: ScreenPhases, TrackIdx: s.Cursor})
+			m.Stack = append(m.Stack, Screen{ScreenType: ScreenEdit, TrackIdx: s.Cursor})
 		}
 	case ScreenPhases:
 		if s.TrackIdx < len(tracks) {
