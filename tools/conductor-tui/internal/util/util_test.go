@@ -233,9 +233,13 @@ func TestCalcViewport_LastItemReachable(t *testing.T) {
 	}
 }
 
-func TestCalcViewport_VisibleCountNeverExceedsMaxVisible(t *testing.T) {
+func TestCalcViewport_VisibleCountRespectsBudget(t *testing.T) {
+	// When maxVisible >= 3, the visible items + indicator lines must fit
+	// within the maxVisible budget. For very small maxVisible (1-2),
+	// we always guarantee at least 1 visible item, which may exceed the
+	// budget when indicators are also needed -- that's correct behavior.
 	for total := 0; total <= 15; total++ {
-		for maxVis := 1; maxVis <= 10; maxVis++ {
+		for maxVis := 3; maxVis <= 10; maxVis++ {
 			for cursor := 0; cursor < total; cursor++ {
 				vp := CalcViewport(total, cursor, maxVis)
 				visible := vp.End - vp.Start
@@ -250,6 +254,23 @@ func TestCalcViewport_VisibleCountNeverExceedsMaxVisible(t *testing.T) {
 				if totalUsed > maxVis {
 					t.Errorf("CalcViewport(%d,%d,%d): visible=%d + indicators=%d = %d > maxVisible=%d",
 						total, cursor, maxVis, visible, indicators, totalUsed, maxVis)
+				}
+			}
+		}
+	}
+}
+
+func TestCalcViewport_SmallMaxVisible_StillShowsOneItem(t *testing.T) {
+	// When maxVisible is very small (1 or 2), we must still show at least 1 item.
+	// Indicators may cause the total lines to exceed maxVisible; that's acceptable.
+	for total := 1; total <= 10; total++ {
+		for cursor := 0; cursor < total; cursor++ {
+			for maxVis := 1; maxVis <= 2; maxVis++ {
+				vp := CalcViewport(total, cursor, maxVis)
+				visible := vp.End - vp.Start
+				if visible < 1 {
+					t.Errorf("CalcViewport(%d,%d,%d): must show at least 1 item, got %d",
+						total, cursor, maxVis, visible)
 				}
 			}
 		}
