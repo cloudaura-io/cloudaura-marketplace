@@ -26,6 +26,8 @@ func (m Model) View() string {
 		return m.ViewTasks()
 	case ScreenDetail:
 		return m.ViewDetail()
+	case ScreenEdit:
+		return m.ViewEdit()
 	}
 	return ""
 }
@@ -122,7 +124,7 @@ func (m Model) ViewTracks() string {
 	if m.ShowArchived {
 		archiveHint = "Hide"
 	}
-	footer := fmt.Sprintf("[↑↓] Navigate  [Enter] View phases  [a] %s archived  [q] Quit", archiveHint)
+	footer := fmt.Sprintf("[Up/Down] Navigate  [Enter] Edit  [p] Phases  [a] %s archived  [q] Quit", archiveHint)
 	b.WriteString(m.RenderFooter(footer))
 	return b.String()
 }
@@ -262,6 +264,47 @@ func (m Model) ViewTasks() string {
 	}
 
 	b.WriteString(m.RenderFooter("[↑↓] Navigate  [Enter] View detail  [Esc] Back"))
+	return b.String()
+}
+
+// ViewEdit renders the edit screen for a selected track.
+func (m Model) ViewEdit() string {
+	tracks := m.Tracks()
+	s := m.CurrentScreen()
+
+	if s.TrackIdx >= len(tracks) {
+		return ""
+	}
+	track := tracks[s.TrackIdx]
+
+	var b strings.Builder
+	b.WriteString(m.RenderHeader([]string{track.TrackID, "Edit"}, "[Esc] Back"))
+	b.WriteString(" " + DimStyle.Render(track.Description) + "\n\n")
+
+	fields := []struct {
+		label string
+		value string
+	}{
+		{"Status", track.Status},
+		{"Type", track.Type},
+	}
+
+	for i, f := range fields {
+		prefix := "  "
+		if i == s.EditFieldIdx {
+			prefix = CursorStyle.Render("> ")
+		}
+
+		label := BoldStyle.Render(util.Pad(f.label+":", 10))
+		value := ColorStyle(util.StatusColor(f.value)).Render(f.value)
+		if i == s.EditFieldIdx {
+			value = "[< " + value + " >]"
+		}
+
+		b.WriteString(prefix + label + value + "\n")
+	}
+
+	b.WriteString(m.RenderFooter("[Up/Down] Select field  [Enter/Left/Right] Change value  [Esc] Back"))
 	return b.String()
 }
 
