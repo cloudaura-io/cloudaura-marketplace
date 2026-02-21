@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.6.0](https://github.com/cloudaura-io/cloudaura-marketplace/compare/conductor-tui-v0.5.1...conductor-tui-v0.6.0) (2026-02-21)
+
+
+### Features
+
+* **conductor-tui:** add CreatedAt/UpdatedAt fields to Track struct ([80852d0](https://github.com/cloudaura-io/cloudaura-marketplace/commit/80852d008bd59d081584f1512831d6b643abf49d))
+* **conductor-tui:** add ScreenEdit screen type and navigation ([f0aa476](https://github.com/cloudaura-io/cloudaura-marketplace/commit/f0aa476270115ec6cbc2ee47530d3b619c32ee5a))
+* **conductor-tui:** implement CalcViewport helper for scrollable lists ([d5e71df](https://github.com/cloudaura-io/cloudaura-marketplace/commit/d5e71dfa6c8059b0a618abb937c156db8500141d))
+* **conductor-tui:** implement field value cycling on edit screen ([1cbe7a0](https://github.com/cloudaura-io/cloudaura-marketplace/commit/1cbe7a00912ed63f66b967562ab93650cc9b3733))
+* **conductor-tui:** implement SaveMetadata with atomic write ([3b09701](https://github.com/cloudaura-io/cloudaura-marketplace/commit/3b09701987aaabede42489cbfc4f113bc973031d))
+* **conductor-tui:** integrate persistence with edit screen ([e50a4e0](https://github.com/cloudaura-io/cloudaura-marketplace/commit/e50a4e0dcf87ee74e7d32a138261f64edd3b2e79))
+* **conductor-tui:** sort tracks by creation date newest-first ([1810345](https://github.com/cloudaura-io/cloudaura-marketplace/commit/181034536899754e135b2acbbba9ade511e60ebf))
+
+
+### Bug Fixes
+
+* **conductor-tui:** integrate CalcViewport into all list views ([efb4785](https://github.com/cloudaura-io/cloudaura-marketplace/commit/efb47850f16779f3f8fc095d97a12271e1382afe))
+* **conductor-tui:** restore Enter→Phases navigation and add e key for Edit ([e6f5469](https://github.com/cloudaura-io/cloudaura-marketplace/commit/e6f5469fb34cfaa3c7f320dcb0a1d95547fcc181))
+
 ## [0.5.1](https://github.com/cloudaura-io/cloudaura-marketplace/compare/conductor-tui-v0.5.0...conductor-tui-v0.5.1) (2026-02-19)
 
 
