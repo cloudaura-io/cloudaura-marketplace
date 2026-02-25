@@ -6,11 +6,15 @@ OS=$(uname -s)
 ARCH=$(uname -m)
 case "$OS" in Linux) PLATFORM=linux;; Darwin) PLATFORM=darwin;; *) echo "Unsupported OS: $OS" && exit 1;; esac
 case "$ARCH" in x86_64) ARCH=x64;; aarch64|arm64) ARCH=arm64;; *) echo "Unsupported: $ARCH" && exit 1;; esac
-TAG=$(curl -sI "https://github.com/$REPO/releases/latest" | grep -i location | sed 's/.*tag\///' | tr -d '\r\n')
+TAG=$(curl -sL "https://api.github.com/repos/$REPO/releases" | grep -o '"tag_name": *"conductor-tui-v[^"]*"' | head -1 | sed 's/.*"conductor/conductor/' | tr -d '"')
+if [ -z "$TAG" ]; then echo "Error: could not find a conductor-tui release" && exit 1; fi
 URL="https://github.com/$REPO/releases/download/$TAG/conductor-tui-$PLATFORM-$ARCH"
 mkdir -p "$DEST"
 echo "Installing conductor-tui ($TAG, $PLATFORM-$ARCH) to $DEST..."
-curl -fSL "$URL" -o "$DEST/conductor-tui" && chmod +x "$DEST/conductor-tui"
+if ! curl -fSL "$URL" -o "$DEST/conductor-tui"; then
+  echo "Error: failed to download $URL" && exit 1
+fi
+chmod +x "$DEST/conductor-tui"
 
 # Add DEST to PATH if not already present
 case ":$PATH:" in
