@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/cloudaura-io/cloudaura-marketplace/compare/conductor-tui-v0.6.0...conductor-tui-v0.6.1) (2026-02-26)
+
+
+### Bug Fixes
+
+* **conductor-tui:** filter releases by conductor-tui tag and add error handling in install scripts ([b3db4da](https://github.com/cloudaura-io/cloudaura-marketplace/commit/b3db4da2a539c012e3f33c4387ea267e20a5d51c))
+
 ## [0.6.0](https://github.com/cloudaura-io/cloudaura-marketplace/compare/conductor-tui-v0.5.1...conductor-tui-v0.6.0) (2026-02-21)
 
 
