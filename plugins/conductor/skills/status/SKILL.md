@@ -1,7 +1,7 @@
 ---
 name: conductor:status
 description: Displays the current progress of the project
-disable-model-invocation: true
+disable-model-invocation: false
 model: sonnet
 allowed-tools: Read, Bash, Glob, Grep
 ---
