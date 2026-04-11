@@ -2,7 +2,7 @@
 name: conductor:implement
 description: Executes tasks from the specified track's plan
 argument-hint: "[track name]"
-disable-model-invocation: true
+disable-model-invocation: false
 context: fork
 agent: general-purpose
 model: opus
