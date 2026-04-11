@@ -2,7 +2,7 @@
 name: conductor:new-track
 description: Plans a track, generates spec and plan documents
 argument-hint: "[track description]"
-disable-model-invocation: true
+disable-model-invocation: false
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
