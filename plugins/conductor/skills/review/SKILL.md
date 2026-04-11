@@ -2,7 +2,7 @@
 name: conductor:review
 description: Reviews completed track work against guidelines and plan
 argument-hint: "[track name or 'current']"
-disable-model-invocation: true
+disable-model-invocation: false
 context: fork
 agent: general-purpose
 model: opus
