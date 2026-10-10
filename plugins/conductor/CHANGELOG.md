@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.7.0](https://github.com/cloudaura-io/cloudaura-marketplace/compare/conductor-v0.6.0...conductor-v0.7.0) (2026-10-10)
+
+
+### Features
+
+* **conductor:** run swarm across multi-repo workspaces ([#34](https://github.com/cloudaura-io/cloudaura-marketplace/issues/34)) ([0289264](https://github.com/cloudaura-io/cloudaura-marketplace/commit/028926412e98299c6ad79e4ec2c5388ddb0efdf9))
+* **conductor:** support multi-repo workspaces as one system ([4204ef7](https://github.com/cloudaura-io/cloudaura-marketplace/commit/4204ef7fc4880be5db5822faababb636d0449dd9))
+* **conductor:** swarm mode for implement and review ([#33](https://github.com/cloudaura-io/cloudaura-marketplace/issues/33)) ([d5e42cd](https://github.com/cloudaura-io/cloudaura-marketplace/commit/d5e42cd1a52f0920b549b4214aa6216f5002ec01))
+
+
+### Bug Fixes
+
+* **conductor:** change disable-model-invocation to false ([14d2b1f](https://github.com/cloudaura-io/cloudaura-marketplace/commit/14d2b1f4cc90d1147648ef7fd3a6a7000e5a72d0))
+
 ## [0.6.0](https://github.com/cloudaura-io/cloudaura-marketplace/compare/conductor-v0.5.0...conductor-v0.6.0) (2026-02-21)
 
 
