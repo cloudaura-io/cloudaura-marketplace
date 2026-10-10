@@ -18,6 +18,8 @@ Your dispatch gives a revision range, a set of files and ONE lens. Run `git diff
 
 Report only real issues you can point at with a file and line range. Severity: Critical, High, Medium, Low. Give a concrete suggestion as a diff when possible. No style nits outside the styleguides, no praise.
 
+In a multi-repo workspace your dispatch also names the repository (`<name>` at `<path>`): your working directory is the project root, which is not a repository, so run every git command with `git -C <path>`, run tests from `<path>`, read files under `<path>/`, and report `file` as `<name>/<path inside the repository>`.
+
 ## As a skeptic
 
 Your dispatch gives one finding. Try to REFUTE it: read the actual code, check whether the claim holds, whether it is reachable, whether something else already handles it. Default to `refuted: true` when the evidence does not clearly support the finding.
