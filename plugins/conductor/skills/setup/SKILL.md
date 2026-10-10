@@ -48,11 +48,16 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
 - **Product Guidelines**: `conductor/product-guidelines.md`
 - **Tracks Registry**: `conductor/tracks.md`
 - **Tracks Directory**: `conductor/tracks/`
+- **Repositories**: `conductor/repos.md` (multi-repo projects only)
 
 **Standard Default Paths (Track):**
 - **Specification**: `conductor/tracks/<track_id>/spec.md`
 - **Implementation Plan**: `conductor/tracks/<track_id>/plan.md`
 - **Metadata**: `conductor/tracks/<track_id>/metadata.json`
+
+### Multi-Repo Projects
+
+Check whether the **Repositories** file (`conductor/repos.md`) exists. If it does, this project is one system spread across several git repositories: read that file before running any git command, and follow its **Multi-Repo Protocol** for every git operation in this command. The protocol overrides the single-repository git instructions in this file (bare `git` commands in the project root, commits without a target repository, plain SHAs).
 
 ---
 
@@ -97,6 +102,32 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
 
 
 ### 2.0 Project Inception
+0.  **Detect Multi-Repo Workspace:**
+    -   Run `git rev-parse --show-toplevel` in the current directory. If it succeeds, this is a single-repository project: skip to step 1.
+    -   Otherwise list the immediate subdirectories that are git repositories (each contains a `.git` directory or file). If there are none, skip to step 1.
+    -   If there is at least one, announce: "This directory is not a git repository, but it contains <N> git repositories: <names>. Conductor can treat them as one system spread across several repositories." Then use the `AskUserQuestion` tool with:
+        - **header:** "Repos"
+        - **question:** "Set this project up as one system spread across these repositories?"
+        - **multiSelect:** false
+        - **options:**
+            1. label: "Yes (Recommended)", description: "One conductor/ for all repositories; code commits go to each repository, one track branch and one PR per repository"
+            2. label: "No", description: "Cancel; run setup inside a single repository instead"
+    -   On "No", halt and await further instructions.
+    -   On "Yes":
+        1.  For each repository, determine its base branch: the branch `origin/HEAD` points to (`git -C <path> symbolic-ref --short refs/remotes/origin/HEAD`, without the `origin/` prefix), otherwise its current branch (`git -C <path> branch --show-current`).
+        2.  Execute `mkdir -p conductor` and `git init conductor`. This local repository holds all Conductor files; it gets no remote.
+        3.  Copy `${CLAUDE_PLUGIN_ROOT}/templates/repos.md` to `conductor/repos.md` and replace the placeholder row of its table with one row per repository (name = directory name, path = `./<directory>`, base branch).
+        4.  Use the `AskUserQuestion` tool to confirm the **Track branch** pattern:
+            - **header:** "Branch"
+            - **question:** "Which branch name should a track use in every repository it touches?"
+            - **multiSelect:** false
+            - **options:**
+                1. label: "feat/<track_id> (Recommended)", description: "Same feature branch name in every repository"
+                2. label: "conductor/<track_id>", description: "Namespaced under conductor/"
+            Write the answer into the **Track branch** line of `conductor/repos.md`.
+        5.  Report which repositories have uncommitted changes (`git -C <path> status --porcelain` not empty). From now on, every git command follows the **Multi-Repo Protocol** in `conductor/repos.md`.
+    -   In a multi-repo workspace, every **Brownfield** check below that runs git (version control, dirty repository, file listing) runs per repository with `git -C <path>`, and the project is always **Brownfield** when any repository contains code.
+
 1.  **Detect Project Maturity:**
     -   **Classify Project:** Determine if the project is "Brownfield" (Existing) or "Greenfield" (New) based on the following indicators:
     -   **Brownfield Indicators:**
@@ -151,7 +182,7 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
         -   Proceed to the next step in this file.
 
 3.  **Initialize Git Repository (for Greenfield):**
-    -   If a `.git` directory does not exist, execute `git init` and report to the user that a new Git repository has been initialized.
+    -   If a `.git` directory does not exist and this is not a multi-repo workspace (step 0), execute `git init` and report to the user that a new Git repository has been initialized.
 
 4.  **Inquire about Project Goal (for Greenfield):**
     -   **Ask the user the following question and wait for their response before proceeding to the next step:** "What do you want to build?"
@@ -394,6 +425,7 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
         - [Tracks Registry](./tracks.md)
         - [Tracks Directory](./tracks/)
         ```
+    -   In a multi-repo workspace, also add `- [Repositories](./repos.md)` under `## Management`.
     -   **Announce:** "Created `conductor/index.md` to serve as the project context index."
 
 2.  **Summarize Actions:** Present a summary of all actions taken during Phase 1, including:
@@ -495,6 +527,7 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
             }
             ```
         Populate fields with actual values. Use the current timestamp.
+        In a multi-repo workspace, also add `"repos": []`; `/conductor:implement` adds each repository the track touches.
         iv. **Write Spec and Plan Files:** In the exact same directory, write the generated `spec.md` and `plan.md` files.
         v.  **Write Index File:** In the exact same directory, write `index.md` with content:
             ```markdown
@@ -512,5 +545,5 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
 
 ### 3.4 Final Announcement
 1.  **Announce Completion:** After the track has been created, announce that the project setup and initial track generation are complete.
-2.  **Save Conductor Files:** Add and commit all files with the commit message `conductor(setup): Add conductor setup files`.
+2.  **Save Conductor Files:** Add and commit all files with the commit message `conductor(setup): Add conductor setup files`. In a multi-repo workspace, commit only in the `conductor/` repository (`git -C conductor add -A && git -C conductor commit -m ...`); nothing is committed in the code repositories.
 3.  **Next Steps:** Inform the user that they can now begin work by running `/conductor:implement`.
