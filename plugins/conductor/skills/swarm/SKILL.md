@@ -72,6 +72,21 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
 
 ---
 
+## 1.2 RESUMING A WORKFLOW RUN
+
+Every `Workflow` call returns a run ID (`wf_...`) and a script path. Remember both, together with the exact `args` you passed, and tell the user the run ID in your one-line start message.
+
+If the run does not complete — its notification reports it failed or was stopped, or the user interrupted it and asks to continue — resume it instead of starting over:
+
+1.  If the run is still going (check `/workflows` or the task list), stop it first.
+2.  Call the `Workflow` tool again with the same `name`, the SAME `args` (unchanged, or the cache misses), and `resumeFromRunId: "<run ID>"`. If the tool refuses the name, pass `scriptPath: "<script path>"` instead of `name`.
+3.  Agents that already finished return their cached results instantly; only the rest run live. The integrator skips tasks that are already `[x]`, so a resumed implement run does not merge twice.
+4.  Handle the new result as if it were the first one.
+
+Resume only works within the same Claude Code session. In a new session, start a fresh run: implement mode treats leftover `[~]` tasks as in-flight (section 2.0, step 2a); run `git worktree prune` first.
+
+---
+
 ## 2.0 IMPLEMENT MODE
 
 1.  **Mark Track In Progress:** If the track is `[ ]` in the **Tracks Registry**, change it to `[~]` (do not commit yet).
@@ -87,7 +102,7 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
     d.  **Mark Batch:** In `plan.md`, change every pending task of this phase from `[ ]` to `[~]`. Stage `plan.md` and the **Tracks Registry** and commit with `conductor(plan): Start phase '<phase name>' with swarm`. Workers branch from this commit.
 
     e.  **Run the Swarm:**
-        -   **Workflow mode:** Call the `Workflow` tool with `name: "conductor:swarm-implement"` and `args: { phase: "<phase name>", workflowPath: "<relative>", specPath: "<relative>", planPath: "<relative>", tasks: [{ id, text }, ...] }` (a JSON object, not a string). The call returns immediately and runs in the background. Tell the user in one line that the swarm started for this phase and that `/workflows` shows progress, then END YOUR TURN and do nothing else. A task notification with the workflow result re-invokes you; continue with step **f**. If the result is truncated, read the output file the notification names.
+        -   **Workflow mode:** Call the `Workflow` tool with `name: "conductor:swarm-implement"` and `args: { phase: "<phase name>", workflowPath: "<relative>", specPath: "<relative>", planPath: "<relative>", tasks: [{ id, text }, ...] }` (a JSON object, not a string). The call returns immediately and runs in the background. Tell the user in one line that the swarm started for this phase and that `/workflows` shows progress, then END YOUR TURN and do nothing else. A task notification with the workflow result re-invokes you; continue with step **f**. If the result is truncated, read the output file the notification names. If the run failed or was stopped, follow **1.2 RESUMING A WORKFLOW RUN**.
         -   **Fallback mode:** Do the same work yourself:
             1. Group the pending tasks into ordered waves: tasks in one wave must not depend on each other's code or edit the same files. When unsure, put a task in its own wave.
             2. For each wave, dispatch one `conductor:task-worker` Agent per task with the same task text and relative paths the workflow would pass. Send at most 5 Agent calls in one message; dispatch the rest after those return. Each worker ends with a JSON object (`taskId`, `status`, `sha`, `worktreePath`, `branch`, `summary`, `files`, `reason`).
@@ -100,7 +115,7 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
         -   **Failing Tests:** If `testsPassed` is false, show `testOutput` and follow the **Workflow**'s debugging rule (at most two fix attempts, then ask the user for guidance) before continuing.
         -   **Leftovers:** Implement every failed or not-started task yourself, one by one, by following the "Task Workflow" (they are already `[~]`).
 
-    g.  **Verify Plan State:** Every task of this phase except the meta-task must now be `[x]` with a short SHA. Fix any line that is not, from `git log`.
+    g.  **Verify Plan State:** Every task of this phase except the meta-task must now be `[x]` with a short SHA in backticks (`- [x] Task: <name> `abc1234``). Fix any line that is not, from `git log`.
 
     h.  **Phase Checkpoint:** Execute the "Phase Completion Verification and Checkpointing Protocol" of the **Workflow**, including the manual verification with the user. Then mark the `Conductor - User Manual Verification` meta-task `[x]`.
 
@@ -117,7 +132,7 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
 3.  **Changed Files:** Run `git diff --numstat <range>`. Build `files: [{ path, lines }]` with `lines` = added + deleted. Skip binary entries (`-`), lock files and generated assets.
 
 4.  **Run the Swarm:**
-    -   **Workflow mode:** Call the `Workflow` tool with `name: "conductor:swarm-review"` and `args: { range: "<range>", planPath: "<relative>", specPath: "<relative>", files: [...] }`. Tell the user in one line that the review swarm started and that `/workflows` shows progress, then END YOUR TURN and do nothing else. The task notification with the result re-invokes you; continue with step 5.
+    -   **Workflow mode:** Call the `Workflow` tool with `name: "conductor:swarm-review"` and `args: { range: "<range>", planPath: "<relative>", specPath: "<relative>", files: [...] }`. Tell the user in one line that the review swarm started and that `/workflows` shows progress, then END YOUR TURN and do nothing else. The task notification with the result re-invokes you; continue with step 5. If the run failed or was stopped, follow **1.2 RESUMING A WORKFLOW RUN**.
     -   **Fallback mode:** Dispatch `conductor:reviewer` Agents yourself: one with lens `tests` over the whole range (it runs the test suite), plus one per lens `intent`, `style`, `correctness` for each chunk of files (about 300 changed lines per chunk). At most 5 Agent calls per message. Merge duplicate findings (same file and start line), then for each Critical or High finding dispatch one `conductor:reviewer` as a skeptic and drop the finding if it is refuted.
 
 5.  **Report:** Read the Review protocol. Write the report exactly in the format of its section **2.4 Output Findings**, using the confirmed `findings` and the `tests` result. If `unreviewedSlices` is above zero, say so in the Summary. Then execute its section **3.0 COMPLETION PHASE**.

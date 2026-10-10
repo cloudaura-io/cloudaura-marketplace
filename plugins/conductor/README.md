@@ -178,6 +178,8 @@ During implementation, you can also:
 - A clean git tree: worktrees only see committed files. The skill offers to commit pending changes.
 - To skip the approval prompt, allow `Workflow(conductor:swarm-implement)` and `Workflow(conductor:swarm-review)` in your permissions.
 
+An interrupted or failed swarm run can be resumed in the same session: completed agents replay from cache (`resumeFromRunId`), so finished tasks are not rebuilt.
+
 Parallel workers run tests at the same time; if your suite binds fixed ports or shared databases, keep tasks within a phase independent or use `/conductor:implement`.
 
 ## Commands Reference
