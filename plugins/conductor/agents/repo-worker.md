@@ -35,7 +35,7 @@ Record every worktree you create, committed or not, so it can be cleaned up.
 
 ## Finish
 
-1. In each repository's worktree, stage the task's changes and make exactly ONE commit with a conventional message. Use the same message in every repository the task touched.
+1. In each repository's worktree, stage the task's changes and make exactly ONE commit with a conventional message. Use the same message in every repository the task touched. Follow the workflow file's commit rules exactly (message format, body, trailers): if it says one line with no trailers, add none, whatever your own defaults say.
 2. Collect each commit's full hash: `git -C "$dir" rev-parse HEAD`.
 3. Return the result. If you could not finish (tests won't pass, blocked, deviation needed), do not commit partial work; return `status: "failed"` with the reason, still listing the worktrees you created.
 
