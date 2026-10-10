@@ -6,37 +6,26 @@
 set -e
 
 SKILLS_DIR="${HOME}/.claude/skills"
-MARKETPLACE_SKILLS="${HOME}/.claude/plugins/marketplaces/cloudaura-marketplace/plugins/conductor/skills"
-
-# Check if marketplace is installed
-if [[ ! -d "$MARKETPLACE_SKILLS" ]]; then
-    echo "Error: Conductor plugin not found at $MARKETPLACE_SKILLS"
-    echo "Install it first: /plugin install conductor@cloudaura-marketplace"
-    exit 1
-fi
+# Resolve skills relative to this script, so it works for both a GitHub
+# marketplace and a local directory one (`claude plugin marketplace add <path>`)
+PLUGIN_SKILLS="$(cd "$(dirname "$0")/../skills" && pwd)"
 
 # Create skills directory if needed
 mkdir -p "$SKILLS_DIR"
 
-# Skills to link (symlink name must match 'name' field in SKILL.md)
-# Format: "skill_dir:symlink_name"
-SKILLS=(
-    "setup:conductor:setup"
-    "implement:conductor:implement"
-    "status:conductor:status"
-    "new-track:conductor:new-track"
-    "review:conductor:review"
-    "revert:conductor:revert"
-)
-
 echo "Creating symlinks for conductor skills..."
 
-for entry in "${SKILLS[@]}"; do
-    skill_dir="${entry%%:*}"
-    symlink_name="${entry#*:}"
+names=()
+for skill_md in "$PLUGIN_SKILLS"/*/SKILL.md; do
+    source="$(dirname "$skill_md")"
+    # Symlink name must match 'name' field in SKILL.md
+    symlink_name="$(sed -n 's/^name: *//p' "$skill_md" | head -1)"
+    if [[ -z "$symlink_name" ]]; then
+        echo "  Skipping: $source (no name field in SKILL.md)"
+        continue
+    fi
 
     target="$SKILLS_DIR/$symlink_name"
-    source="$MARKETPLACE_SKILLS/$skill_dir"
 
     if [[ -L "$target" ]]; then
         echo "  Updating: $symlink_name"
@@ -49,15 +38,13 @@ for entry in "${SKILLS[@]}"; do
     fi
 
     ln -s "$source" "$target"
+    names+=("$symlink_name")
 done
 
 echo ""
 echo "Done! Restart Claude Code to enable autocomplete."
 echo ""
 echo "Available commands (with autocomplete):"
-echo "  /conductor:setup"
-echo "  /conductor:implement"
-echo "  /conductor:status"
-echo "  /conductor:new-track"
-echo "  /conductor:review"
-echo "  /conductor:revert"
+for name in "${names[@]}"; do
+    echo "  /$name"
+done
