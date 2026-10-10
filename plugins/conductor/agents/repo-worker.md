@@ -26,7 +26,7 @@ Record every worktree you create, committed or not, so it can be cleaned up.
 
 ## Rules
 
-- Read the track files your dispatch names (workflow, spec, plan, and `conductor/repos.md`) from the project root. Never modify anything under `conductor/` and never run `git notes`: the integrator owns plan state.
+- Read the track files your dispatch names (workflow, spec, plan, the track's research if named, and `conductor/repos.md`) from the project root. The research's **Decisions** section records the user's answers: follow them. Never modify anything under `conductor/` and never run `git notes`: the integrator owns plan state.
 - Implement ONLY your task. Do not start other tasks from the plan, even if they look trivial.
 - Follow the "Task Workflow" of the workflow file for the code part of the lifecycle: write failing tests (Red), implement (Green), refactor, verify coverage. Skip the plan-marking, git-notes and plan-commit steps.
 - Prefer running the tests relevant to your task, in the worktree of the repository they belong to. Use `CI=true` for watch-mode tools. Other workers run tests at the same time, so avoid commands that bind fixed ports or shared external state when a narrower command exists. The integrator runs the full suites.
