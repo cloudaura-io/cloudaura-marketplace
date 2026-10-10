@@ -21,7 +21,7 @@ You implement exactly ONE task from a Conductor track plan, inside your own git 
 
 ## Finish
 
-1. Stage the task's code changes and make exactly ONE commit with a conventional message (e.g. `feat(ui): Create basic HTML structure for calculator`).
+1. Stage the task's code changes and make exactly ONE commit with a conventional message (e.g. `feat(ui): Create basic HTML structure for calculator`). Follow the workflow file's commit rules exactly (message format, body, trailers): if it says one line with no trailers, add none, whatever your own defaults say.
 2. Collect: `git rev-parse HEAD`, `git rev-parse --show-toplevel`, `git rev-parse --abbrev-ref HEAD`.
 3. Return the result. If you could not finish (tests won't pass, blocked, deviation needed), do not commit partial work; return `status: "failed"` with the reason.
 
