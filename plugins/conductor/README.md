@@ -21,7 +21,7 @@ The philosophy behind Conductor is simple: control your code. By treating contex
 - **Build on existing projects**: Intelligent initialization for both new (Greenfield) and existing (Brownfield) projects.
 - **Smart revert**: A git-aware revert command that understands logical units of work (tracks, phases, tasks) rather than just commit hashes.
 - **Interactive forms**: Native Claude Code UI with keyboard navigation.
-- **Swarm mode**: Implement or review a track with parallel agents (5 by default, configurable) via Claude Code dynamic workflows.
+- **Swarm mode**: Implement or review a track with parallel agents (15 by default, configurable) via Claude Code dynamic workflows.
 
 ## Interactive Forms
 
@@ -139,6 +139,10 @@ Once you approve the plan, run `/conductor:implement`. Your coding agent then wo
 /conductor:implement
 ```
 
+Conductor first asks how to implement the track:
+- **Swarm**: then asks how many agents may run at once (15 by default) and runs [Swarm Mode](#5-swarm-mode-parallel-agents).
+- **Single agent**: one subagent implements the tasks one by one; questions and the manual verification still come to you in the main window.
+
 Conductor will:
 1.  Select the next pending task.
 2.  Follow the defined workflow (e.g., TDD: Write Test -> Fail -> Implement -> Pass).
@@ -163,7 +167,7 @@ During implementation, you can also:
 
 ### 5. Swarm Mode (Parallel Agents)
 
-`/conductor:swarm` runs the same lifecycle with a swarm of agents working at once (5 by default).
+`/conductor:swarm` runs the same lifecycle with a swarm of agents working at once (15 by default). `/conductor:implement` offers the same swarm as its first question.
 
 ```bash
 /conductor:swarm implement "dark mode toggle"
@@ -198,7 +202,7 @@ Parallel workers run tests at the same time; if your suite binds fixed ports or 
 | `/conductor:status` | Displays the current progress of the tracks file and active tracks. | Reads `conductor/tracks.md` |
 | `/conductor:revert` | Reverts a track, phase, or task by analyzing git history. | Reverts git history |
 | `/conductor:review` | Reviews completed work against guidelines and the plan. | Reads `plan.md`, `product-guidelines.md` |
-| `/conductor:swarm` | Implements or reviews a track with parallel agents (5 by default, `--max N`), via dynamic workflows. | `conductor/tracks.md`<br>`conductor/tracks/<id>/plan.md` |
+| `/conductor:swarm` | Implements or reviews a track with parallel agents (15 by default, `--max N`), via dynamic workflows. | `conductor/tracks.md`<br>`conductor/tracks/<id>/plan.md` |
 
 ## Resources
 

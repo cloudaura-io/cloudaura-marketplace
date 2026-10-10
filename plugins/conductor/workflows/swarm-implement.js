@@ -1,6 +1,6 @@
 export const meta = {
   name: 'swarm-implement',
-  description: 'Conductor swarm: implement one plan phase with parallel task workers in isolated worktrees (default 5 at once)',
+  description: 'Conductor swarm: implement one plan phase with parallel task workers in isolated worktrees (default 15 at once)',
   whenToUse: 'Run only by /conductor:swarm implement, which passes the phase and its pending tasks in args. If invoked with no args (a user typed the bare slash command), do not call Workflow: tell the user to run /conductor:swarm implement.',
   phases: [
     { title: 'Plan', detail: 'group pending tasks into dependency-free waves' },
@@ -16,9 +16,9 @@ if (!A || !Array.isArray(A.tasks) || !A.tasks.length) {
   return { started: false, next: 'Tell the user to run /conductor:swarm implement; this workflow needs the phase and tasks that skill supplies.' }
 }
 
-// Swarm size from args.maxParallel (default 5). No upper cap here: the Claude Code runtime
+// Swarm size from args.maxParallel (default 15). No upper cap here: the Claude Code runtime
 // enforces its own concurrency limit (CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS).
-const MAX = Math.max(1, Math.floor(Number(A.maxParallel)) || 5)
+const MAX = Math.max(1, Math.floor(Number(A.maxParallel)) || 15)
 log(`swarm size: ${MAX} agent(s) at once`)
 
 // Run fn over items with at most MAX agents in flight.

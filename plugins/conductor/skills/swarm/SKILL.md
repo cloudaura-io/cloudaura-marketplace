@@ -1,6 +1,6 @@
 ---
 name: conductor:swarm
-description: Implements or reviews a track with a swarm of parallel agents (default 5, configurable), using Claude Code dynamic workflows
+description: Implements or reviews a track with a swarm of parallel agents (default 15, configurable), using Claude Code dynamic workflows
 argument-hint: "implement|review [track name] [--max N]"
 disable-model-invocation: true
 model: opus
@@ -31,7 +31,7 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
 - Implement: `${CLAUDE_SKILL_DIR}/../implement/SKILL.md`
 - Review: `${CLAUDE_SKILL_DIR}/../review/SKILL.md`
 
-**Swarm limit (`maxParallel`):** never more than `maxParallel` agents at once. The workflows enforce it; in fallback mode you enforce it (at most `maxParallel` Agent calls per message). `maxParallel` defaults to 5 and is set in section 1.1, step 2.
+**Swarm limit (`maxParallel`):** never more than `maxParallel` agents at once. The workflows enforce it; in fallback mode you enforce it (at most `maxParallel` Agent calls per message). `maxParallel` defaults to 15 and is set in section 1.1, step 2 (or by `/conductor:implement`).
 
 ---
 
@@ -55,7 +55,7 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
         1. label: "Implement (Recommended)", description: "Build the pending tasks of a track in parallel worktrees"
         2. label: "Review", description: "Review a track's commits with parallel reviewers and verification"
 
-2.  **Swarm Size:** Set `maxParallel` from the arguments or the user's request, in any form: a flag (`--max 10`, `--max=3`) or plain words ("max agent 10", "10 agents", "use 3 agents", "maks 4 agenty"). Remove it from the track name. Default to 5 when none is given. Any whole number of 1 or more is valid; do not cap it — Claude Code's workflow runtime enforces its own concurrency limit, which the user can raise with `CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS`. Announce the swarm size in your start message.
+2.  **Swarm Size:** Set `maxParallel` from the arguments or the user's request, in any form: a flag (`--max 10`, `--max=3`) or plain words ("max agent 10", "10 agents", "use 3 agents", "maks 4 agenty"). Remove it from the track name. Default to 15 when none is given. Any whole number of 1 or more is valid; do not cap it — Claude Code's workflow runtime enforces its own concurrency limit, which the user can raise with `CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS`. Announce the swarm size in your start message.
 
 3.  **Setup Check:** Execute section **1.1 SETUP CHECK** of the Implement protocol.
 

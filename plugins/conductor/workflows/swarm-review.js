@@ -1,6 +1,6 @@
 export const meta = {
   name: 'swarm-review',
-  description: 'Conductor swarm: review a track diff by lens x file chunk, then adversarially verify findings (default 5 agents at once)',
+  description: 'Conductor swarm: review a track diff by lens x file chunk, then adversarially verify findings (default 15 agents at once)',
   whenToUse: 'Run only by /conductor:swarm review, which passes the revision range and changed files in args. If invoked with no args (a user typed the bare slash command), do not call Workflow: tell the user to run /conductor:swarm review.',
   phases: [
     { title: 'Find', detail: 'one reviewer per lens x file chunk, plus one test run' },
@@ -17,9 +17,9 @@ if (!A || !A.range || !Array.isArray(A.files) || !A.files.length) {
   return { started: false, next: 'Tell the user to run /conductor:swarm review; this workflow needs the range and files that skill supplies.' }
 }
 
-// Swarm size from args.maxParallel (default 5). No upper cap here: the Claude Code runtime
+// Swarm size from args.maxParallel (default 15). No upper cap here: the Claude Code runtime
 // enforces its own concurrency limit (CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS).
-const MAX = Math.max(1, Math.floor(Number(A.maxParallel)) || 5)
+const MAX = Math.max(1, Math.floor(Number(A.maxParallel)) || 15)
 log(`swarm size: ${MAX} agent(s) at once`)
 
 async function pool(items, fn) {

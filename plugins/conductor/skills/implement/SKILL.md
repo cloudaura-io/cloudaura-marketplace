@@ -3,10 +3,19 @@ name: conductor:implement
 description: Executes tasks from the specified track's plan
 argument-hint: "[track name]"
 disable-model-invocation: true
-context: fork
-agent: general-purpose
 model: opus
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep
+allowed-tools:
+  - Read
+  - Write
+  - Edit
+  - Bash
+  - Glob
+  - Grep
+  - AskUserQuestion
+  - Agent
+  - SendMessage
+  - Workflow
+  - Workflow(conductor:swarm-implement)
 ---
 
 ## 1.0 SYSTEM DIRECTIVE
@@ -86,6 +95,35 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
 
 2.  **Handle Failure:** If ANY of these are missing (or their resolved paths do not exist), Announce: "Conductor is not set up. Please run `/conductor:setup`." and HALT.
 
+---
+
+## 1.2 EXECUTION MODE
+**PROTOCOL: Ask how the track should be implemented. This runs in the main session, which is the only place that talks to the user.**
+
+**User questions stay in this main session.** Subagents and swarm agents never ask the user anything; they return questions in their results. Ask every question in this protocol — including the ones the **Workflow** phrases as plain text (manual verification, yes/no confirmations, doc sync approvals) — with the `AskUserQuestion` tool, here.
+
+1.  **Ask for Mode:** Use the `AskUserQuestion` tool with:
+    - **header:** "Mode"
+    - **question:** "How should this track be implemented?"
+    - **multiSelect:** false
+    - **options:**
+        1. label: "Swarm", description: "Parallel agents build independent tasks in separate git worktrees (dynamic workflows)"
+        2. label: "Single agent", description: "One subagent implements the tasks one by one"
+
+2.  **If "Swarm", Ask for Size:** Use the `AskUserQuestion` tool with:
+    - **header:** "Agents"
+    - **question:** "How many agents may run at once?"
+    - **multiSelect:** false
+    - **options:**
+        1. label: "15 (Recommended)", description: "Default swarm size"
+        2. label: "5", description: "Smaller swarm, fewer parallel test runs"
+        3. label: "10", description: "Medium swarm"
+        4. label: "25", description: "Large swarm; Claude Code runs at most 16 at once unless CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS is raised"
+    - A custom answer is any whole number of 1 or more; do not cap it. Remember it as `maxParallel`.
+    - Choosing "Swarm" is the user's explicit request to run the `conductor:swarm-implement` workflow.
+
+3.  **Remember the Mode** and continue with **2.0 TRACK SELECTION**. The mode is used in section **3.0**, step 4.
+
 
 ---
 
@@ -137,9 +175,23 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
 
 4.  **Execute Tasks and Update Track Plan:**
     a. **Announce:** State that you will now execute the tasks from the track's **Implementation Plan** by following the procedures in the **Workflow**.
-    b. **Iterate Through Tasks:** You MUST now loop through each task in the track's **Implementation Plan** one by one.
-    c. **For Each Task, You MUST:**
-        i. **Defer to Workflow:** The **Workflow** file is the **single source of truth** for the entire task lifecycle. You MUST now read and execute the procedures defined in the "Task Workflow" section of the **Workflow** file you have in your context. Follow its steps for implementation, testing, and committing precisely.
+    b. **Swarm Mode:** Read `${CLAUDE_SKILL_DIR}/../swarm/SKILL.md`. Execute its section **1.1** steps **4. Clean Tree** and **5. Engine**, its section **1.2 RESUMING A WORKFLOW RUN** when needed, and its section **2.0 IMPLEMENT MODE** steps 1 and 2 for the track selected here, with the `maxParallel` chosen in **1.2 EXECUTION MODE**. Skip its other mode and size questions. When every phase is checkpointed, continue with step 5 below instead of the swarm's Finalize step.
+    c. **Single-Agent Mode:** For each phase of the **Implementation Plan**, in order, skipping phases that already have a `[checkpoint: <sha>]`:
+        i. **Dispatch:** Use the `Agent` tool to start one `general-purpose` subagent with `model: "opus"`. Give it the track id, the relative paths of the **Specification**, **Implementation Plan** and **Workflow**, and the phase name, and instruct it to:
+            - Implement every `[ ]` or `[~]` task of this phase in order, following the "Task Workflow" section of the **Workflow** precisely (implementation, testing, commits, git notes, plan updates). Skip the `Conductor - User Manual Verification` meta-task.
+            - Then execute steps 1 to 4 of the **Workflow**'s "Phase Completion Verification and Checkpointing Protocol" (test coverage, automated tests, manual verification plan), but NOT the user confirmation or the checkpoint commit.
+            - Never ask the user anything. If it needs a decision, stop and return the question.
+            - Return: the tasks completed with their short SHAs, the test command and result, the manual verification plan, and any open question.
+        ii. **Questions:** If the subagent returned a question, ask it with the `AskUserQuestion` tool, send the answer back with `SendMessage` to the same subagent (or dispatch a new one with the answer if it cannot be resumed), and wait for its new result.
+        iii. **Manual Verification:** Show the user the manual verification plan, then use the `AskUserQuestion` tool with:
+            - **header:** "Verify"
+            - **question:** "Does phase '<phase name>' meet your expectations?"
+            - **multiSelect:** false
+            - **options:**
+                1. label: "Yes", description: "Create the phase checkpoint"
+                2. label: "Needs changes", description: "Describe what to change"
+            - If the user wants changes, send the feedback to the subagent with `SendMessage` (or a new subagent), wait for its new result, and ask again.
+        iv. **Checkpoint:** Once confirmed, execute steps 6 to 10 of the "Phase Completion Verification and Checkpointing Protocol" yourself (checkpoint commit, git note with the verification report and the user's confirmation, `[checkpoint: <sha>]` in the plan, plan commit, announcement). Mark the `Conductor - User Manual Verification` meta-task `[x]`.
 
 5.  **Finalize Track:**
     -   After all tasks in the track's local **Implementation Plan** are completed, you MUST update the track's status in the **Tracks Registry**.
