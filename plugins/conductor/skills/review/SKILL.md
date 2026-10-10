@@ -68,11 +68,16 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
 - **Product Guidelines**: `conductor/product-guidelines.md`
 - **Tracks Registry**: `conductor/tracks.md`
 - **Tracks Directory**: `conductor/tracks/`
+- **Repositories**: `conductor/repos.md` (multi-repo projects only)
 
 **Standard Default Paths (Track):**
 - **Specification**: `conductor/tracks/<track_id>/spec.md`
 - **Implementation Plan**: `conductor/tracks/<track_id>/plan.md`
 - **Metadata**: `conductor/tracks/<track_id>/metadata.json`
+
+### Multi-Repo Projects
+
+Check whether the **Repositories** file (`conductor/repos.md`) exists. If it does, this project is one system spread across several git repositories: read that file before running any git command, and follow its **Multi-Repo Protocol** for every git operation in this command. The protocol overrides the single-repository git instructions in this file (bare `git` commands in the project root, commits without a target repository, plain SHAs).
 
 ---
 
@@ -146,7 +151,7 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
     -   If no track is in progress, or user declines, ask: "What would you like to review? (Enter a track name, or type 'current' for uncommitted changes)"
 3.  **Confirm Scope:** Ensure you and the user agree on what is being reviewed.
 4.  **Hand Off by Mode:**
-    -   **Swarm:** If the scope is a track, execute section **2.5 SWARM REVIEW** instead of 2.2 to 2.4, then continue with **3.0 COMPLETION PHASE**. If the scope is uncommitted changes (`current`), tell the user the swarm reviews tracks only and use Single agent.
+    -   **Swarm:** If the scope is a track, execute section **2.5 SWARM REVIEW** instead of 2.2 to 2.4, then continue with **3.0 COMPLETION PHASE**. If the scope is uncommitted changes (`current`), tell the user the swarm reviews tracks only and use Single agent. If `conductor/repos.md` exists (multi-repo workspace), tell the user the swarm does not support multi-repo workspaces yet and use Single agent.
     -   **Single agent:** Use the `Agent` tool to start one `general-purpose` subagent with `model: "opus"`. Give it the confirmed scope and the path `${CLAUDE_SKILL_DIR}/SKILL.md`, and instruct it to execute sections **2.2**, **2.3** and **2.4** of that file for this scope, never ask the user anything, and return the report exactly in the 2.4 format plus any open question. If it returns a question, ask it with the `AskUserQuestion` tool and send the answer back with `SendMessage` (or a new subagent). Show the user the report, then continue with **3.0 COMPLETION PHASE**.
 
 ### 2.2 Retrieve Context
@@ -164,6 +169,7 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
     -   Read the track's `plan.md`.
     -   **Extract Commits:** Parse `plan.md` to find recorded git commit hashes (usually in the "Completed" tasks or "History" section).
     -   **Determine Revision Range:** Identify the start (first commit parent) and end (last commit).
+    -   **Multi-repo workspace:** Review per repository. For every repository in the track's `metadata.json` `"repos"` (or named in the plan's `<name>@<sha>` references), the revision range is `<base branch>...<track branch>` from the **Repositories** file. Run every `git diff` below in that repository with `git -C <path>`, prefix file paths in findings with the repository name, and run each repository's own tests.
 3.  **Load and Analyze Changes (Smart Chunking):**
     -   **Volume Check:** Run `git diff --shortstat <revision_range>` first.
     -   **Strategy Selection:**

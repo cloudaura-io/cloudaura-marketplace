@@ -8,6 +8,7 @@
 4. **High Code Coverage:** Aim for >80% code coverage for all modules
 5. **User Experience First:** Every decision should prioritize user experience
 6. **Non-Interactive & CI-Aware:** Prefer non-interactive commands. Use `CI=true` for watch-mode tools (tests, linters) to ensure single execution.
+7. **Multi-Repo Projects:** If `conductor/repos.md` exists, the project is one system spread across several git repositories. Every git command in this workflow (commit, notes, diff, log) runs in the repository that owns the files, as its Multi-Repo Protocol describes, and plan updates are committed in `conductor/`.
 
 ## Task Workflow
 

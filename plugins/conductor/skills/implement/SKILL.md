@@ -77,11 +77,16 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
 - **Product Guidelines**: `conductor/product-guidelines.md`
 - **Tracks Registry**: `conductor/tracks.md`
 - **Tracks Directory**: `conductor/tracks/`
+- **Repositories**: `conductor/repos.md` (multi-repo projects only)
 
 **Standard Default Paths (Track):**
 - **Specification**: `conductor/tracks/<track_id>/spec.md`
 - **Implementation Plan**: `conductor/tracks/<track_id>/plan.md`
 - **Metadata**: `conductor/tracks/<track_id>/metadata.json`
+
+### Multi-Repo Projects
+
+Check whether the **Repositories** file (`conductor/repos.md`) exists. If it does, this project is one system spread across several git repositories: read that file before running any git command, and follow its **Multi-Repo Protocol** for every git operation in this command. The protocol overrides the single-repository git instructions in this file (bare `git` commands in the project root, commits without a target repository, plain SHAs).
 
 ---
 
@@ -101,6 +106,8 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
 **PROTOCOL: Ask how the track should be implemented. This runs in the main session, which is the only place that talks to the user.**
 
 **User questions stay in this main session.** Subagents and swarm agents never ask the user anything; they return questions in their results. Ask every question in this protocol — including the ones the **Workflow** phrases as plain text (manual verification, yes/no confirmations, doc sync approvals) — with the `AskUserQuestion` tool, here.
+
+0.  **Multi-Repo Check:** If `conductor/repos.md` exists, swarm mode is not available yet: its worktrees come from a single repository. Announce: "This is a multi-repo workspace; swarm mode does not support it yet, so one subagent will implement the track." Use **Single agent** and skip the questions below.
 
 1.  **Ask for Mode:** Use the `AskUserQuestion` tool with:
     - **header:** "Mode"
@@ -180,6 +187,7 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
         i. **Dispatch:** Use the `Agent` tool to start one `general-purpose` subagent with `model: "opus"`. Give it the track id, the relative paths of the **Specification**, **Implementation Plan** and **Workflow**, and the phase name, and instruct it to:
             - Implement every `[ ]` or `[~]` task of this phase in order, following the "Task Workflow" section of the **Workflow** precisely (implementation, testing, commits, git notes, plan updates). Skip the `Conductor - User Manual Verification` meta-task.
             - Then execute steps 1 to 4 of the **Workflow**'s "Phase Completion Verification and Checkpointing Protocol" (test coverage, automated tests, manual verification plan), but NOT the user confirmation or the checkpoint commit.
+            - In a multi-repo workspace (`conductor/repos.md` exists): read that file first and follow its **Multi-Repo Protocol** for every git command (track branch per repository, commits in the repository that owns the files, `<name>@<sha>` references, plan commits in `conductor/`).
             - Never ask the user anything. If it needs a decision, stop and return the question.
             - Return: the tasks completed with their short SHAs, the test command and result, the manual verification plan, and any open question.
         ii. **Questions:** If the subagent returned a question, ask it with the `AskUserQuestion` tool, send the answer back with `SendMessage` to the same subagent (or dispatch a new one with the answer if it cannot be resumed), and wait for its new result.
@@ -198,6 +206,20 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
     -   This requires finding the specific heading for the track (e.g., `## [~] Track: <Description>`) and replacing it with the completed status (e.g., `## [x] Track: <Description>`).
     -   **Commit Changes:** Stage the **Tracks Registry** file and commit with the message `chore(conductor): Mark track '<track_description>' as complete`.
     -   Announce that the track is fully complete and the tracks file has been updated.
+
+6.  **Pull Requests (Multi-repo workspace only):**
+    -   List every repository in the track's `"repos"` with its track branch, base branch and commit count (`git -C <path> rev-list --count <base>..<track branch>`).
+    -   Use the `AskUserQuestion` tool with:
+        - **header:** "PRs"
+        - **question:** "Push the track branches and open one pull request per repository?"
+        - **multiSelect:** false
+        - **options:**
+            1. label: "Push and open PRs", description: "Push each track branch and open a PR against its base branch"
+            2. label: "Push only", description: "Push the branches; I will open the PRs myself"
+            3. label: "Not now", description: "Leave the branches local"
+    -   On "Push and open PRs": push each branch (`git -C <path> push -u origin <track branch>`), then open the pull requests with the hosting CLI available for that remote (`gh`, `az repos`, `glab`). Use the same title for all of them (`<type>: <track description>`); each description names the track and links the sibling pull requests. If no CLI is available for a remote, push and print the URL to create the PR manually.
+    -   On "Push only": push each branch and print the compare URLs.
+    -   Report every branch and pull request URL.
 
 ---
 

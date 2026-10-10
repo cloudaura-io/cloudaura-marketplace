@@ -55,11 +55,16 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
 - **Product Guidelines**: `conductor/product-guidelines.md`
 - **Tracks Registry**: `conductor/tracks.md`
 - **Tracks Directory**: `conductor/tracks/`
+- **Repositories**: `conductor/repos.md` (multi-repo projects only)
 
 **Standard Default Paths (Track):**
 - **Specification**: `conductor/tracks/<track_id>/spec.md`
 - **Implementation Plan**: `conductor/tracks/<track_id>/plan.md`
 - **Metadata**: `conductor/tracks/<track_id>/metadata.json`
+
+### Multi-Repo Projects
+
+Check whether the **Repositories** file (`conductor/repos.md`) exists. If it does, this project is one system spread across several git repositories: read that file before running any git command, and follow its **Multi-Repo Protocol** for every git operation in this command. The protocol overrides the single-repository git instructions in this file (bare `git` commands in the project root, commits without a target repository, plain SHAs).
 
 ---
 
@@ -145,7 +150,9 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
         *   Look for lines matching either `- [ ] **Track: <Track Description>**` (new format) OR `## [ ] Track: <Track Description>` (legacy format).
     *   Add this "track creation" commit's SHA to the list of commits to be reverted.
 
-4.  **Compile and Analyze Final List:**
+4.  **Multi-repo workspace:** Plan references have the form `<name>@<sha>`. Look up each SHA in its own repository (`git -C <path> ...`). Plan-update and track-creation commits are in the `conductor/` repository (`git -C conductor log ...`). Keep one list per repository.
+
+5.  **Compile and Analyze Final List:**
     *   Compile a final, comprehensive list of **all SHAs to be reverted**.
     *   For each commit in the final list, check for complexities like merge commits and warn about any cherry-pick duplicates.
 
@@ -173,7 +180,7 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
 ## 5.0 PHASE 4: EXECUTION & VERIFICATION
 **GOAL: Execute the revert, verify the plan's state, and handle any runtime errors gracefully.**
 
-1.  **Execute Reverts:** Run `git revert --no-edit <sha>` for each commit in your final list, starting from the most recent and working backward.
+1.  **Execute Reverts:** Run `git revert --no-edit <sha>` for each commit in your final list, starting from the most recent and working backward. In a multi-repo workspace, revert each repository's list in its own repository (`git -C <path> revert --no-edit <sha>`), code repositories first and the `conductor/` repository last, and show the per-repository lists in the Phase 3 summary.
 2.  **Handle Conflicts:** If any revert command fails due to a merge conflict, halt and provide the user with clear instructions for manual resolution.
 3.  **Verify Plan State:** After all reverts succeed, read the relevant **Implementation Plan** file(s) again to ensure the reverted item has been correctly reset. If not, perform a file edit to fix it and commit the correction.
 4.  **Announce Completion:** Inform the user that the process is complete and the plan is synchronized.
