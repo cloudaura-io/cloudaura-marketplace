@@ -1,7 +1,7 @@
 ---
 name: conductor:swarm
-description: Implements or reviews a track with a swarm of up to 5 parallel agents, using Claude Code dynamic workflows
-argument-hint: "implement|review [track name]"
+description: Implements or reviews a track with a swarm of parallel agents (default 5, configurable), using Claude Code dynamic workflows
+argument-hint: "implement|review [track name] [--max N]"
 disable-model-invocation: true
 model: opus
 allowed-tools:
@@ -31,7 +31,7 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
 - Implement: `${CLAUDE_SKILL_DIR}/../implement/SKILL.md`
 - Review: `${CLAUDE_SKILL_DIR}/../review/SKILL.md`
 
-**Swarm limit:** never more than 5 agents at once. The workflows enforce this; in fallback mode you enforce it (at most 5 Agent calls per message).
+**Swarm limit (`maxParallel`):** never more than `maxParallel` agents at once. The workflows enforce it; in fallback mode you enforce it (at most `maxParallel` Agent calls per message). `maxParallel` defaults to 5 and is set in section 1.1, step 2.
 
 ---
 
@@ -47,7 +47,7 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
 
 ## 1.1 MODE AND PREFLIGHT
 
-1.  **Mode:** The user provided: `$ARGUMENTS`. If the first word is `implement` or `review`, use it and treat the rest as the track name. Otherwise use the `AskUserQuestion` tool with:
+1.  **Mode:** The user provided: `$ARGUMENTS`. If the first word is `implement` or `review`, use it and treat the rest as the track name (after removing the swarm size, step 2). Otherwise use the `AskUserQuestion` tool with:
     - **header:** "Swarm"
     - **question:** "What should the swarm do?"
     - **multiSelect:** false
@@ -55,9 +55,11 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
         1. label: "Implement (Recommended)", description: "Build the pending tasks of a track in parallel worktrees"
         2. label: "Review", description: "Review a track's commits with parallel reviewers and verification"
 
-2.  **Setup Check:** Execute section **1.1 SETUP CHECK** of the Implement protocol.
+2.  **Swarm Size:** Set `maxParallel` from the arguments or the user's request, in any form: a flag (`--max 10`, `--max=3`) or plain words ("max agent 10", "10 agents", "use 3 agents", "maks 4 agenty"). Remove it from the track name. Default to 5 when none is given. Clamp it to 1–16 and tell the user if you clamped it (the workflow runtime runs at most about 16 agents at once by default). Announce the swarm size in your start message.
 
-3.  **Clean Tree:** Run `git status --porcelain`. Workers build in git worktrees, which only contain committed files. If the output is not empty, use the `AskUserQuestion` tool with:
+3.  **Setup Check:** Execute section **1.1 SETUP CHECK** of the Implement protocol.
+
+4.  **Clean Tree:** Run `git status --porcelain`. Workers build in git worktrees, which only contain committed files. If the output is not empty, use the `AskUserQuestion` tool with:
     - **header:** "Changes"
     - **question:** "There are uncommitted changes. Worktrees won't see them. How do you want to proceed?"
     - **multiSelect:** false
@@ -66,11 +68,11 @@ CRITICAL: You must validate the success of every tool call. If any tool call fai
         2. label: "Stop", description: "Stop so you can handle them yourself"
     - On "Commit them": stage everything and commit with `chore(conductor): Save work before swarm`. On "Stop": halt.
 
-4.  **Engine:** If the `Workflow` tool is available to you, use **workflow mode**. If not, announce once: "Dynamic workflows are not available in this session (enable them in /config). Running the swarm with parallel subagents instead." and use **fallback mode**.
+5.  **Engine:** If the `Workflow` tool is available to you, use **workflow mode**. If not, announce once: "Dynamic workflows are not available in this session (enable them in /config). Running the swarm with parallel subagents instead." and use **fallback mode**.
 
-5.  **Track Selection:** Execute section **2.0 TRACK SELECTION** of the Implement protocol, using the pre-loaded Tracks Registry above. Track headings may be written as `## [ ] Track: <Description>` or `- [ ] **Track: <Description>**`; accept both, and keep whichever format the file uses when you update it. For review mode, a track marked `[x]` is also selectable.
+6.  **Track Selection:** Execute section **2.0 TRACK SELECTION** of the Implement protocol, using the pre-loaded Tracks Registry above. Track headings may be written as `## [ ] Track: <Description>` or `- [ ] **Track: <Description>**`; accept both, and keep whichever format the file uses when you update it. For review mode, a track marked `[x]` is also selectable.
 
-6.  **Load Track Context:** Resolve and read the track's **Specification** and **Implementation Plan**. Note their paths relative to the repository root — agents only ever get relative paths.
+7.  **Load Track Context:** Resolve and read the track's **Specification** and **Implementation Plan**. Note their paths relative to the repository root — agents only ever get relative paths.
 
 ---
 
@@ -81,7 +83,7 @@ Every `Workflow` call returns a run ID (`wf_...`) and a script path. Remember bo
 If the run does not complete — its notification reports it failed or was stopped, or the user interrupted it and asks to continue — resume it instead of starting over:
 
 1.  If the run is still going (check `/workflows` or the task list), stop it first.
-2.  Call the `Workflow` tool again with the same `name`, the SAME `args` (unchanged, or the cache misses), and `resumeFromRunId: "<run ID>"`. If the tool refuses the name, pass `scriptPath: "<script path>"` instead of `name`.
+2.  Call the `Workflow` tool again with the same `name`, the SAME `args` (unchanged, or the cache misses — only `maxParallel` may change, e.g. when the user asks for more or fewer agents), and `resumeFromRunId: "<run ID>"`. If the tool refuses the name, pass `scriptPath: "<script path>"` instead of `name`.
 3.  Agents that already finished return their cached results instantly; only the rest run live. The integrator skips tasks that are already `[x]`, so a resumed implement run does not merge twice.
 4.  Handle the new result as if it were the first one.
 
@@ -104,10 +106,10 @@ Resume only works within the same Claude Code session. In a new session, start a
     d.  **Mark Batch:** In `plan.md`, change every pending task of this phase from `[ ]` to `[~]`. Stage `plan.md` and the **Tracks Registry** and commit with `conductor(plan): Start phase '<phase name>' with swarm`. Workers branch from this commit.
 
     e.  **Run the Swarm:**
-        -   **Workflow mode:** Call the `Workflow` tool with `name: "conductor:swarm-implement"` and `args: { phase: "<phase name>", workflowPath: "<relative>", specPath: "<relative>", planPath: "<relative>", tasks: [{ id, text }, ...] }` (a JSON object, not a string). The call returns immediately and runs in the background. Tell the user in one line that the swarm started for this phase and that `/workflows` shows progress, then END YOUR TURN and do nothing else. A task notification with the workflow result re-invokes you; continue with step **f**. If the result is truncated, read the output file the notification names. If the run failed or was stopped, follow **1.2 RESUMING A WORKFLOW RUN**.
+        -   **Workflow mode:** Call the `Workflow` tool with `name: "conductor:swarm-implement"` and `args: { phase: "<phase name>", workflowPath: "<relative>", specPath: "<relative>", planPath: "<relative>", tasks: [{ id, text }, ...], maxParallel: <N> }` (a JSON object, not a string). The call returns immediately and runs in the background. Tell the user in one line that the swarm started for this phase and that `/workflows` shows progress, then END YOUR TURN and do nothing else. A task notification with the workflow result re-invokes you; continue with step **f**. If the result is truncated, read the output file the notification names. If the run failed or was stopped, follow **1.2 RESUMING A WORKFLOW RUN**.
         -   **Fallback mode:** Do the same work yourself:
             1. Group the pending tasks into ordered waves: tasks in one wave must not depend on each other's code or edit the same files. When unsure, put a task in its own wave.
-            2. For each wave, dispatch one `conductor:task-worker` Agent per task with the same task text and relative paths the workflow would pass. Send at most 5 Agent calls in one message; dispatch the rest after those return. Each worker ends with a JSON object (`taskId`, `status`, `sha`, `worktreePath`, `branch`, `summary`, `files`, `reason`).
+            2. For each wave, dispatch one `conductor:task-worker` Agent per task with the same task text and relative paths the workflow would pass. Send at most `maxParallel` Agent calls in one message; dispatch the rest after those return. Each worker ends with a JSON object (`taskId`, `status`, `sha`, `worktreePath`, `branch`, `summary`, `files`, `reason`).
             3. Dispatch one `conductor:integrator` Agent with the wave's `done` tasks in plan order (`taskId`, `task`, `sha`, `summary`, `files`). It ends with a JSON object (`merged`, `failed`, `testCommand`, `testsPassed`, `testOutput`).
             4. If `testsPassed` is false, stop starting new waves; the remaining tasks are "not started".
 
@@ -135,7 +137,7 @@ Resume only works within the same Claude Code session. In a new session, start a
 3.  **Changed Files:** Run `git diff --numstat <range>`. Build `files: [{ path, lines }]` with `lines` = added + deleted. Skip binary entries (`-`), lock files and generated assets.
 
 4.  **Run the Swarm:**
-    -   **Workflow mode:** Call the `Workflow` tool with `name: "conductor:swarm-review"` and `args: { range: "<range>", planPath: "<relative>", specPath: "<relative>", files: [...] }`. Tell the user in one line that the review swarm started and that `/workflows` shows progress, then END YOUR TURN and do nothing else. The task notification with the result re-invokes you; continue with step 5. If the run failed or was stopped, follow **1.2 RESUMING A WORKFLOW RUN**.
-    -   **Fallback mode:** Dispatch `conductor:reviewer` Agents yourself: one with lens `tests` over the whole range (it runs the test suite), plus one per lens `intent`, `style`, `correctness` for each chunk of files (about 300 changed lines per chunk). At most 5 Agent calls per message. Merge duplicate findings (same file and start line), then for each Critical or High finding dispatch one `conductor:reviewer` as a skeptic and drop the finding if it is refuted.
+    -   **Workflow mode:** Call the `Workflow` tool with `name: "conductor:swarm-review"` and `args: { range: "<range>", planPath: "<relative>", specPath: "<relative>", files: [...], maxParallel: <N> }`. Tell the user in one line that the review swarm started and that `/workflows` shows progress, then END YOUR TURN and do nothing else. The task notification with the result re-invokes you; continue with step 5. If the run failed or was stopped, follow **1.2 RESUMING A WORKFLOW RUN**.
+    -   **Fallback mode:** Dispatch `conductor:reviewer` Agents yourself: one with lens `tests` over the whole range (it runs the test suite), plus one per lens `intent`, `style`, `correctness` for each chunk of files (about 300 changed lines per chunk). At most `maxParallel` Agent calls per message. Merge duplicate findings (same file and start line), then for each Critical or High finding dispatch one `conductor:reviewer` as a skeptic and drop the finding if it is refuted.
 
 5.  **Report:** Read the Review protocol. Write the report exactly in the format of its section **2.4 Output Findings**, using the confirmed `findings` and the `tests` result. If `unreviewedSlices` is above zero, say so in the Summary. Then execute its section **3.0 COMPLETION PHASE**.

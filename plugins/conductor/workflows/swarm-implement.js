@@ -1,15 +1,13 @@
 export const meta = {
   name: 'swarm-implement',
-  description: 'Conductor swarm: implement one plan phase with up to 5 parallel task workers in isolated worktrees',
+  description: 'Conductor swarm: implement one plan phase with parallel task workers in isolated worktrees (default 5 at once)',
   whenToUse: 'Run only by /conductor:swarm implement, which passes the phase and its pending tasks in args. If invoked with no args (a user typed the bare slash command), do not call Workflow: tell the user to run /conductor:swarm implement.',
   phases: [
     { title: 'Plan', detail: 'group pending tasks into dependency-free waves' },
-    { title: 'Build', detail: 'one task-worker per task in its own worktree, max 5 at once' },
+    { title: 'Build', detail: 'one task-worker per task in its own worktree, at most maxParallel at once' },
     { title: 'Integrate', detail: 'serial cherry-pick, git note, plan.md update, full test run after each wave' },
   ],
 }
-
-const MAX = 5 // ponytail: fixed swarm size, make it an arg if teams need more
 
 let A = args
 if (typeof A === 'string') { try { A = JSON.parse(A) } catch (e) { A = null } }
@@ -17,6 +15,10 @@ if (!A || !Array.isArray(A.tasks) || !A.tasks.length) {
   log('started without a phase to implement -- nothing dispatched')
   return { started: false, next: 'Tell the user to run /conductor:swarm implement; this workflow needs the phase and tasks that skill supplies.' }
 }
+
+// Swarm size from args.maxParallel (default 5). ponytail: capped at 16, the runtime's default concurrency ceiling.
+const MAX = Math.min(16, Math.max(1, Math.floor(Number(A.maxParallel)) || 5))
+log(`swarm size: ${MAX} agent(s) at once`)
 
 // Run fn over items with at most MAX agents in flight.
 async function pool(items, fn) {

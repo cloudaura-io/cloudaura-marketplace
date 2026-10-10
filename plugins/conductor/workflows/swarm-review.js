@@ -1,6 +1,6 @@
 export const meta = {
   name: 'swarm-review',
-  description: 'Conductor swarm: review a track diff by lens x file chunk, then adversarially verify findings, max 5 agents at once',
+  description: 'Conductor swarm: review a track diff by lens x file chunk, then adversarially verify findings (default 5 agents at once)',
   whenToUse: 'Run only by /conductor:swarm review, which passes the revision range and changed files in args. If invoked with no args (a user typed the bare slash command), do not call Workflow: tell the user to run /conductor:swarm review.',
   phases: [
     { title: 'Find', detail: 'one reviewer per lens x file chunk, plus one test run' },
@@ -8,7 +8,6 @@ export const meta = {
   ],
 }
 
-const MAX = 5 // ponytail: fixed swarm size, make it an arg if teams need more
 const CHUNK = 300 // changed lines per finder, same threshold as /conductor:review
 
 let A = args
@@ -17,6 +16,10 @@ if (!A || !A.range || !Array.isArray(A.files) || !A.files.length) {
   log('started without a diff to review -- nothing dispatched')
   return { started: false, next: 'Tell the user to run /conductor:swarm review; this workflow needs the range and files that skill supplies.' }
 }
+
+// Swarm size from args.maxParallel (default 5). ponytail: capped at 16, the runtime's default concurrency ceiling.
+const MAX = Math.min(16, Math.max(1, Math.floor(Number(A.maxParallel)) || 5))
+log(`swarm size: ${MAX} agent(s) at once`)
 
 async function pool(items, fn) {
   const out = new Array(items.length).fill(null)
