@@ -41,6 +41,9 @@ const repoList = MULTI ? A.repos.map(r => `${r.name} at ${r.path} (track branch 
 const ctx = MULTI
   ? `Multi-repo workspace: the project root (your working directory) is not a git repository; it is one system spread across these repositories: ${repoList}. Follow the Multi-Repo Protocol in conductor/repos.md. Track files (relative to the project root, read-only for workers): workflow ${A.workflowPath}, spec ${A.specPath}, plan ${A.planPath}. Phase: "${A.phase}".`
   : `Track files (paths relative to the repository root, which is your working directory): workflow ${A.workflowPath}, spec ${A.specPath}, plan ${A.planPath}. Phase: "${A.phase}".`
+// Optional research findings for the track (written by /conductor:research): agents read it instead of re-discovering the same facts.
+const research = A.researchPath ? ` Track research (read it before planning or coding; its Decisions section records the user's answers): ${A.researchPath}.` : ''
+const ctxR = ctx + research
 const byId = Object.fromEntries(A.tasks.map(t => [t.id, t]))
 const order = id => A.tasks.findIndex(t => t.id === id)
 
@@ -49,7 +52,7 @@ phase('Plan')
 let waves = A.tasks.map(t => [t.id])
 if (A.tasks.length > 1) {
   const plan = await agent(
-    `${ctx}\nGroup these pending tasks into ordered waves. Tasks in one wave are built in parallel in separate worktrees, so they must not depend on each other's code and should not edit the same files.${MULTI ? ' Tasks that only touch different repositories never conflict on files, but a task can still depend on another repository\'s output (e.g. a client needing a new API endpoint).' : ''} A task that needs another task's output goes in a later wave. Read the plan, spec and relevant code to judge. Do not edit anything. Use the task ids exactly.\n${JSON.stringify(A.tasks, null, 1)}`,
+    `${ctxR}\nGroup these pending tasks into ordered waves. Tasks in one wave are built in parallel in separate worktrees, so they must not depend on each other's code and should not edit the same files.${MULTI ? ' Tasks that only touch different repositories never conflict on files, but a task can still depend on another repository\'s output (e.g. a client needing a new API endpoint).' : ''} A task that needs another task's output goes in a later wave. Read the plan, spec and relevant code to judge. Do not edit anything. Use the task ids exactly.\n${JSON.stringify(A.tasks, null, 1)}`,
     {
       label: 'plan-waves', phase: 'Plan',
       schema: {
@@ -119,7 +122,7 @@ const out = { started: true, merged: [], failed: [], notStarted: [], worktrees: 
 for (let w = 0; w < waves.length; w++) {
   const ids = waves[w]
   const built = await pool(ids, id => agent(
-    `${ctx}\nYour task (id ${id}):\n${byId[id].text}`,
+    `${ctxR}\nYour task (id ${id}):\n${byId[id].text}`,
     MULTI
       ? { label: `task:${id}`, phase: 'Build', agentType: 'conductor:repo-worker', schema: BUILT_MULTI }
       : { label: `task:${id}`, phase: 'Build', agentType: 'conductor:task-worker', isolation: 'worktree', schema: BUILT }))
@@ -140,7 +143,7 @@ for (let w = 0; w < waves.length; w++) {
   if (!ok.length) continue
 
   const res = await agent(
-    `${ctx}\nIntegrate these built tasks into the main checkout, in this order:\n${JSON.stringify(ok, null, 1)}`,
+    `${ctxR}\nIntegrate these built tasks into the main checkout, in this order:\n${JSON.stringify(ok, null, 1)}`,
     { label: `integrate:wave-${w + 1}`, phase: 'Integrate', agentType: 'conductor:integrator', schema: MERGED })
   const rest = waves.slice(w + 1).flat()
   if (!res) {

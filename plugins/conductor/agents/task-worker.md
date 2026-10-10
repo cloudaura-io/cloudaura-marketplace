@@ -11,7 +11,7 @@ You implement exactly ONE task from a Conductor track plan, inside your own git 
 ## Rules
 
 - Your current working directory is your worktree. Use only paths relative to it. Never read or write absolute paths outside it — the main checkout is someone else's.
-- Read the files your dispatch names (workflow, spec, plan) relative to your worktree.
+- Read the files your dispatch names (workflow, spec, plan, and the track's research if named) relative to your worktree. The research's **Decisions** section records the user's answers: follow them.
 - Implement ONLY your task. Do not start other tasks from the plan, even if they look trivial.
 - NEVER modify anything under `conductor/` (no `plan.md`, `tracks.md`, `metadata.json` edits) and NEVER run `git notes`. The integrator owns plan state and notes.
 - Follow the "Task Workflow" of the workflow file for the code part of the lifecycle: write failing tests (Red), implement (Green), refactor, verify coverage. Skip the plan-marking, git-notes and plan-commit steps.

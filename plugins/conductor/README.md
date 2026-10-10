@@ -62,6 +62,7 @@ Start a new Claude Code session and type `/conductor:` - you should see availabl
 - `/conductor:status`
 - `/conductor:revert`
 - `/conductor:review`
+- `/conductor:research`
 
 ## Usage
 
@@ -125,7 +126,25 @@ Conductor offers four edit modes:
 /conductor:edit-track "dark mode toggle"
 ```
 
-### 4. Implement the Track
+### 4. Research the Track (Optional)
+
+Before implementing, run `/conductor:research` to find out what the track needs: where the relevant code lives and what can be reused, how the libraries and platforms involved behave in the versions you use (it searches the web too, citing sources), and which risks the plan misses.
+
+- You confirm the research questions first; then one agent answers them, or a swarm runs one researcher per question with a skeptic re-checking every answer and its sources.
+- Questions only you can answer are asked in the main window; a subagent records your answers in the **Decisions** section of `research.md`.
+- Proposed plan changes are shown as a diff and applied only if you approve them; completed tasks are never touched.
+- `/conductor:implement` and its workers read `research.md` and follow its decisions.
+
+**Generated Artifacts:**
+- `conductor/tracks/<track_id>/research.md`
+
+```bash
+/conductor:research
+# OR target a track and a focus
+/conductor:research <track_id> how the service worker cache behaves offline
+```
+
+### 5. Implement the Track
 
 Once you approve the plan, run `/conductor:implement`. Your coding agent then works through the `plan.md` file, checking off tasks as it completes them.
 
@@ -139,7 +158,7 @@ Once you approve the plan, run `/conductor:implement`. Your coding agent then wo
 ```
 
 Conductor first asks how to implement the track:
-- **Swarm**: then asks how many agents may run at once (15 by default) and runs [Swarm Mode](#5-swarm-mode-parallel-agents).
+- **Swarm**: then asks how many agents may run at once (15 by default) and runs [Swarm Mode](#6-swarm-mode-parallel-agents).
 - **Single agent**: one subagent implements the tasks one by one; questions and the manual verification still come to you in the main window.
 
 Conductor will:
@@ -164,19 +183,20 @@ During implementation, you can also:
   /conductor:review
   ```
 
-### 5. Swarm Mode (Parallel Agents)
+### 6. Swarm Mode (Parallel Agents)
 
-`/conductor:implement` and `/conductor:review` both start with two questions: **Swarm** or **Single agent**, and for a swarm how many agents may run at once (15 by default, any number of 1 or more). With **Single agent**, one subagent does the work. In both modes every question and the manual verification come to you in the main window; agents never ask you directly.
+`/conductor:implement`, `/conductor:review` and `/conductor:research` all start with two questions: **Swarm** or **Single agent**, and for a swarm how many agents may run at once (15 by default, any number of 1 or more). With **Single agent**, one subagent does the work. In both modes every question and the manual verification come to you in the main window; agents never ask you directly.
 
 - **implement**: per phase, a planner groups independent tasks into waves. Each task is built by a `task-worker` agent in its own git worktree. After each wave an `integrator` agent cherry-picks the commits one by one, adds git notes, updates `plan.md` and runs the full test suite. Failed tasks fall back to sequential implementation. The phase checkpoint and manual verification stay with you.
 - **review** (tracks only): `reviewer` agents check every chunk of the track diff through the intent, style and correctness lenses (one more runs the tests), then skeptics try to refute each finding before it reaches the report.
+- **research**: one `researcher` agent per question searches the codebase and the web, a skeptic re-checks its evidence and sources, then one writer merges the answers into `research.md`.
 
 **Requirements:**
 - Dynamic workflows enabled (`/config` -> Dynamic workflows). Without them the swarm falls back to parallel subagents.
 - A clean git tree for implement: worktrees only see committed files. Conductor offers to commit pending changes.
 - In a multi-repo workspace (see below), `repo-worker` agents make their own worktrees in each repository a task touches, branched from the track branch; the integrator cherry-picks into each repository's checkout and records `<repo>@<sha>` references.
 - Swarm size is not capped by Conductor. Claude Code runs at most 16 workflow agents at once by default; raise it with `CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS` to run bigger swarms.
-- To skip the approval prompt, allow `Workflow(conductor:swarm-implement)` and `Workflow(conductor:swarm-review)` in your permissions.
+- To skip the approval prompt, allow `Workflow(conductor:swarm-implement)`, `Workflow(conductor:swarm-review)` and `Workflow(conductor:swarm-research)` in your permissions.
 
 An interrupted or failed swarm run can be resumed in the same session: completed agents replay from cache (`resumeFromRunId`), so finished tasks are not rebuilt. You can change the swarm size when resuming.
 
@@ -212,6 +232,7 @@ To convert an existing setup, create `conductor/repos.md` from [templates/repos.
 | `/conductor:status` | Displays the current progress of the tracks file and active tracks. | Reads `conductor/tracks.md` |
 | `/conductor:revert` | Reverts a track, phase, or task by analyzing git history. | Reverts git history |
 | `/conductor:review` | Reviews completed work against guidelines and the plan. | Reads `plan.md`, `product-guidelines.md` |
+| `/conductor:research` | Researches what a track needs from the codebase and the web; records decisions and proposes plan changes. | `conductor/tracks/<id>/research.md` |
 
 ## Resources
 

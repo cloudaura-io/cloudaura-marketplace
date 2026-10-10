@@ -121,4 +121,5 @@ Check whether the **Repositories** file (`conductor/repos.md`) exists. If it doe
     -   **Phases (total):** The total number of major phases.
     -   **Tasks (total):** The total number of tasks.
     -   **Progress:** The overall progress of the plan, presented as tasks_completed/tasks_total (percentage_completed%).
+    -   **Research:** For each track, whether it has a `research.md`, and how many of its open questions are not yet resolved in its **Decisions** section.
     -   **Repositories (multi-repo workspace only):** For each repository in the **Repositories** table: its current branch (`git -C <path> branch --show-current`), whether it is on the in-progress track's branch, and its number of uncommitted changes (`git -C <path> status --porcelain | wc -l`).

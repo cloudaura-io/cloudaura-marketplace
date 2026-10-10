@@ -210,3 +210,11 @@ Check whether the **Repositories** file (`conductor/repos.md`) exists. If it doe
         (Replace `<Relative Track Path>` with the path to the track directory relative to the **Tracks Registry** file location.)
 7.  **Announce Completion:** Inform the user:
     > "New track '<track_id>' has been created and added to the tracks file. You can now start implementation by running `/conductor:implement`."
+8.  **Offer Research:** Use the `AskUserQuestion` tool with:
+    - **header:** "Research"
+    - **question:** "Research what this track needs (codebase and web) before implementing it?"
+    - **multiSelect:** false
+    - **options:**
+        1. label: "Not now", description: "Finish here; run /conductor:research <track_id> later"
+        2. label: "Yes", description: "Tell me to run /conductor:research <track_id> next"
+    - On "Yes", tell the user to run `/conductor:research <track_id>`. Do not start the research from this command.
