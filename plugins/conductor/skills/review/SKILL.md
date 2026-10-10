@@ -59,11 +59,16 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
 - **Product Guidelines**: `conductor/product-guidelines.md`
 - **Tracks Registry**: `conductor/tracks.md`
 - **Tracks Directory**: `conductor/tracks/`
+- **Repositories**: `conductor/repos.md` (multi-repo projects only)
 
 **Standard Default Paths (Track):**
 - **Specification**: `conductor/tracks/<track_id>/spec.md`
 - **Implementation Plan**: `conductor/tracks/<track_id>/plan.md`
 - **Metadata**: `conductor/tracks/<track_id>/metadata.json`
+
+### Multi-Repo Projects
+
+Check whether the **Repositories** file (`conductor/repos.md`) exists. If it does, this project is one system spread across several git repositories: read that file before running any git command, and follow its **Multi-Repo Protocol** for every git operation in this command. The protocol overrides the single-repository git instructions in this file (bare `git` commands in the project root, commits without a target repository, plain SHAs).
 
 ---
 
@@ -123,6 +128,7 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
     -   Read the track's `plan.md`.
     -   **Extract Commits:** Parse `plan.md` to find recorded git commit hashes (usually in the "Completed" tasks or "History" section).
     -   **Determine Revision Range:** Identify the start (first commit parent) and end (last commit).
+    -   **Multi-repo workspace:** Review per repository. For every repository in the track's `metadata.json` `"repos"` (or named in the plan's `<name>@<sha>` references), the revision range is `<base branch>...<track branch>` from the **Repositories** file. Run every `git diff` below in that repository with `git -C <path>`, prefix file paths in findings with the repository name, and run each repository's own tests.
 3.  **Load and Analyze Changes (Smart Chunking):**
     -   **Volume Check:** Run `git diff --shortstat <revision_range>` first.
     -   **Strategy Selection:**

@@ -62,11 +62,16 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
 - **Product Guidelines**: `conductor/product-guidelines.md`
 - **Tracks Registry**: `conductor/tracks.md`
 - **Tracks Directory**: `conductor/tracks/`
+- **Repositories**: `conductor/repos.md` (multi-repo projects only)
 
 **Standard Default Paths (Track):**
 - **Specification**: `conductor/tracks/<track_id>/spec.md`
 - **Implementation Plan**: `conductor/tracks/<track_id>/plan.md`
 - **Metadata**: `conductor/tracks/<track_id>/metadata.json`
+
+### Multi-Repo Projects
+
+Check whether the **Repositories** file (`conductor/repos.md`) exists. If it does, this project is one system spread across several git repositories: read that file before running any git command, and follow its **Multi-Repo Protocol** for every git operation in this command. The protocol overrides the single-repository git instructions in this file (bare `git` commands in the project root, commits without a target repository, plain SHAs).
 
 ---
 
@@ -116,3 +121,4 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
     -   **Phases (total):** The total number of major phases.
     -   **Tasks (total):** The total number of tasks.
     -   **Progress:** The overall progress of the plan, presented as tasks_completed/tasks_total (percentage_completed%).
+    -   **Repositories (multi-repo workspace only):** For each repository in the **Repositories** table: its current branch (`git -C <path> branch --show-current`), whether it is on the in-progress track's branch, and its number of uncommitted changes (`git -C <path> status --porcelain | wc -l`).

@@ -68,11 +68,16 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
 - **Product Guidelines**: `conductor/product-guidelines.md`
 - **Tracks Registry**: `conductor/tracks.md`
 - **Tracks Directory**: `conductor/tracks/`
+- **Repositories**: `conductor/repos.md` (multi-repo projects only)
 
 **Standard Default Paths (Track):**
 - **Specification**: `conductor/tracks/<track_id>/spec.md`
 - **Implementation Plan**: `conductor/tracks/<track_id>/plan.md`
 - **Metadata**: `conductor/tracks/<track_id>/metadata.json`
+
+### Multi-Repo Projects
+
+Check whether the **Repositories** file (`conductor/repos.md`) exists. If it does, this project is one system spread across several git repositories: read that file before running any git command, and follow its **Multi-Repo Protocol** for every git operation in this command. The protocol overrides the single-repository git instructions in this file (bare `git` commands in the project root, commits without a target repository, plain SHAs).
 
 ---
 
@@ -140,12 +145,27 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
     b. **Iterate Through Tasks:** You MUST now loop through each task in the track's **Implementation Plan** one by one.
     c. **For Each Task, You MUST:**
         i. **Defer to Workflow:** The **Workflow** file is the **single source of truth** for the entire task lifecycle. You MUST now read and execute the procedures defined in the "Task Workflow" section of the **Workflow** file you have in your context. Follow its steps for implementation, testing, and committing precisely.
+        ii. **Multi-repo workspace:** Before the first change in a repository, prepare the track branch there exactly as rule 4 of the **Multi-Repo Protocol** says (dirty check, branch from base, add to `"repos"` in `metadata.json`). Every commit, test run and git note of the task happens in the repository that owns the changed files; plan and registry updates are committed in `conductor/`.
 
 5.  **Finalize Track:**
     -   After all tasks in the track's local **Implementation Plan** are completed, you MUST update the track's status in the **Tracks Registry**.
     -   This requires finding the specific heading for the track (e.g., `## [~] Track: <Description>`) and replacing it with the completed status (e.g., `## [x] Track: <Description>`).
     -   **Commit Changes:** Stage the **Tracks Registry** file and commit with the message `chore(conductor): Mark track '<track_description>' as complete`.
     -   Announce that the track is fully complete and the tracks file has been updated.
+
+6.  **Pull Requests (Multi-repo workspace only):**
+    -   List every repository in the track's `"repos"` with its track branch, base branch and commit count (`git -C <path> rev-list --count <base>..<track branch>`).
+    -   Use the `AskUserQuestion` tool with:
+        - **header:** "PRs"
+        - **question:** "Push the track branches and open one pull request per repository?"
+        - **multiSelect:** false
+        - **options:**
+            1. label: "Push and open PRs", description: "Push each track branch and open a PR against its base branch"
+            2. label: "Push only", description: "Push the branches; I will open the PRs myself"
+            3. label: "Not now", description: "Leave the branches local"
+    -   On "Push and open PRs": push each branch (`git -C <path> push -u origin <track branch>`), then open the pull requests with the hosting CLI available for that remote (`gh`, `az repos`, `glab`). Use the same title for all of them (`<type>: <track description>`); each description names the track and links the sibling pull requests. If no CLI is available for a remote, push and print the URL to create the PR manually.
+    -   On "Push only": push each branch and print the compare URLs.
+    -   Report every branch and pull request URL.
 
 ---
 

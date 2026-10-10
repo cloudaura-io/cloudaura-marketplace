@@ -159,6 +159,25 @@ During implementation, you can also:
   /conductor:review
   ```
 
+## Multi-Repo Projects
+
+Some systems are one product spread across several git repositories (an API, a web portal, a mobile app, workers, infrastructure) that sit side by side in one folder that is not itself a repository. Run `/conductor:setup` in that folder and Conductor offers to treat them as one system:
+
+- One `conductor/` directory for the whole system. It becomes its own local git repository for plans and tracks; no code is committed there.
+- `conductor/repos.md` lists the repositories with their base branches and holds the **Multi-Repo Protocol** that every command follows.
+- A track uses one branch name (default `feat/<track_id>`) in every repository it touches, and ends with one pull request per repository.
+- Plans reference commits as `<repo>@<sha>`, so `/conductor:review` and `/conductor:revert` work per repository.
+
+```
+my-system/
+├── conductor/      # local git repo: product, plans, tracks, repos.md
+├── api/            # git repo
+├── web/            # git repo
+└── mobile/         # git repo
+```
+
+To convert an existing setup, create `conductor/repos.md` from [templates/repos.md](templates/repos.md), run `git init conductor` and commit the existing Conductor files there.
+
 ## Commands Reference
 
 | Command | Description | Artifacts |
