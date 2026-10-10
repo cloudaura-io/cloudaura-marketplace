@@ -169,7 +169,7 @@ During implementation, you can also:
 /conductor:swarm implement "dark mode toggle"
 /conductor:swarm review "dark mode toggle"
 
-# Swarm size: a flag or plain words (1-16)
+# Swarm size: a flag or plain words
 /conductor:swarm implement "dark mode toggle" --max 10
 /conductor:swarm implement dark mode toggle, max 3 agents
 ```
@@ -180,6 +180,7 @@ During implementation, you can also:
 **Requirements:**
 - Dynamic workflows enabled (`/config` -> Dynamic workflows). Without them the swarm falls back to parallel subagents.
 - A clean git tree: worktrees only see committed files. The skill offers to commit pending changes.
+- Swarm size is not capped by Conductor. Claude Code runs at most 16 workflow agents at once by default; raise it with `CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS` to run bigger swarms.
 - To skip the approval prompt, allow `Workflow(conductor:swarm-implement)` and `Workflow(conductor:swarm-review)` in your permissions.
 
 An interrupted or failed swarm run can be resumed in the same session: completed agents replay from cache (`resumeFromRunId`), so finished tasks are not rebuilt. You can change the swarm size when resuming.

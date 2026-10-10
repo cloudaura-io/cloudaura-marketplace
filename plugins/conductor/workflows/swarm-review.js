@@ -17,8 +17,9 @@ if (!A || !A.range || !Array.isArray(A.files) || !A.files.length) {
   return { started: false, next: 'Tell the user to run /conductor:swarm review; this workflow needs the range and files that skill supplies.' }
 }
 
-// Swarm size from args.maxParallel (default 5). ponytail: capped at 16, the runtime's default concurrency ceiling.
-const MAX = Math.min(16, Math.max(1, Math.floor(Number(A.maxParallel)) || 5))
+// Swarm size from args.maxParallel (default 5). No upper cap here: the Claude Code runtime
+// enforces its own concurrency limit (CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS).
+const MAX = Math.max(1, Math.floor(Number(A.maxParallel)) || 5)
 log(`swarm size: ${MAX} agent(s) at once`)
 
 async function pool(items, fn) {
