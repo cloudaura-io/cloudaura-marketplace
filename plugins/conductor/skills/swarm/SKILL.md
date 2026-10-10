@@ -23,6 +23,8 @@ You are an AI agent assistant for the Conductor spec-driven development framewor
 
 The user typing `/conductor:swarm` is their explicit request to run the Conductor swarm workflows below.
 
+**User questions stay in this main session.** Only you talk to the user. Swarm agents (workflow agents and fallback subagents) never ask the user anything; they return questions in their results. Ask every question — your own, the ones agents return, and the ones the sibling protocols and the **Workflow** phrase as plain text (yes/no confirmations, manual verification, doc sync approvals) — with the `AskUserQuestion` tool, here, never inside a workflow or subagent. Never tell an agent to ask the user.
+
 CRITICAL: You must validate the success of every tool call. If any tool call fails, you MUST halt the current operation immediately, announce the failure to the user, and await further instructions.
 
 **Sibling protocols** (read them when a step below says so; do not re-implement them):
@@ -113,6 +115,7 @@ Resume only works within the same Claude Code session. In a new session, start a
         -   **Clean Up Worktrees:** For each entry in `worktrees`, run `git worktree remove --force <path>` and `git branch -D <branch>`, then `git worktree prune`. Their commits are already cherry-picked or abandoned.
         -   **Report:** Tell the user which tasks were merged (with their new short SHAs), which failed and why, and which were not started.
         -   **Failing Tests:** If `testsPassed` is false, show `testOutput` and follow the **Workflow**'s debugging rule (at most two fix attempts, then ask the user for guidance) before continuing.
+        -   **Agent Questions:** For every failed task with a non-empty `question`, ask it with the `AskUserQuestion` tool (offer the sensible answers as options) and use the answer when you implement that task.
         -   **Leftovers:** Implement every failed or not-started task yourself, one by one, by following the "Task Workflow" (they are already `[~]`).
 
     g.  **Verify Plan State:** Every task of this phase except the meta-task must now be `[x]` with a short SHA in backticks (`- [x] Task: <name> `abc1234``). Fix any line that is not, from `git log`.

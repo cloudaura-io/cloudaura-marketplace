@@ -70,8 +70,9 @@ const BUILT = {
     summary: { type: 'string' },
     files: { type: 'array', items: { type: 'string' } },
     reason: { type: 'string' },
+    question: { type: 'string', description: 'question for the user, or empty' },
   },
-  required: ['taskId', 'status', 'sha', 'worktreePath', 'branch', 'summary', 'files', 'reason'],
+  required: ['taskId', 'status', 'sha', 'worktreePath', 'branch', 'summary', 'files', 'reason', 'question'],
 }
 const MERGED = {
   type: 'object',
@@ -97,7 +98,7 @@ for (let w = 0; w < waves.length; w++) {
   built.forEach((b, i) => {
     if (b && b.worktreePath) out.worktrees.push({ path: b.worktreePath, branch: b.branch })
     if (b && b.status === 'done' && b.sha) ok.push({ taskId: ids[i], task: byId[ids[i]].text, sha: b.sha, summary: b.summary, files: b.files })
-    else out.failed.push({ taskId: ids[i], reason: b ? (b.reason || 'no commit') : 'worker died' })
+    else out.failed.push({ taskId: ids[i], reason: b ? (b.reason || 'no commit') : 'worker died', question: (b && b.question) || '' })
   })
   if (!ok.length) continue
 

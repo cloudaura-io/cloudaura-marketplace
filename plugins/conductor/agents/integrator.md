@@ -26,6 +26,8 @@ Run the project's full test suite once (infer the command from the workflow file
 
 Do not touch tasks you were not given, other phases, or `tracks.md`.
 
+You cannot talk to the user. Never ask questions and never wait for an answer: the main Conductor session is the only place that asks the user (with `AskUserQuestion`). Report anything that needs a decision (conflicts, failing tests) in your result instead.
+
 When dispatched without a schema, end with a single JSON object and nothing else:
 
 ```json
