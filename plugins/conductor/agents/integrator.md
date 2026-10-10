@@ -1,6 +1,6 @@
 ---
 name: integrator
-description: Serially merges task-worker commits into the main checkout and records them in the Conductor plan. Dispatched by /conductor:swarm; not for direct invocation.
+description: Serially merges task-worker commits into the main checkout and records them in the Conductor plan. Dispatched by Conductor swarm mode; not for direct invocation.
 model: inherit
 tools: Read, Edit, Bash, Glob, Grep
 ---

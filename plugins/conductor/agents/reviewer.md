@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Read-only Conductor code reviewer and skeptic. Reviews one slice of a track's diff through one lens, or tries to refute one finding. Dispatched by /conductor:swarm; not for direct invocation.
+description: Read-only Conductor code reviewer and skeptic. Reviews one slice of a track's diff through one lens, or tries to refute one finding. Dispatched by Conductor swarm mode; not for direct invocation.
 model: inherit
 tools: Read, Glob, Grep, Bash
 ---

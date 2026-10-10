@@ -3,10 +3,19 @@ name: conductor:review
 description: Reviews completed track work against guidelines and plan
 argument-hint: "[track name or 'current']"
 disable-model-invocation: false
-context: fork
-agent: general-purpose
 model: opus
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep
+allowed-tools:
+  - Read
+  - Write
+  - Edit
+  - Bash
+  - Glob
+  - Grep
+  - AskUserQuestion
+  - Agent
+  - SendMessage
+  - Workflow
+  - Workflow(conductor:swarm-review)
 ---
 
 ## 1.0 SYSTEM DIRECTIVE
@@ -84,6 +93,35 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
 
 ---
 
+## 1.2 EXECUTION MODE
+**PROTOCOL: Ask how the review should run. This runs in the main session, which is the only place that talks to the user.**
+
+**User questions stay in this main session.** Subagents and swarm agents never ask the user anything; they return questions in their results. Ask every question of this protocol with the `AskUserQuestion` tool, here.
+
+1.  **Ask for Mode:** Use the `AskUserQuestion` tool with:
+    - **header:** "Mode"
+    - **question:** "How should the review run?"
+    - **multiSelect:** false
+    - **options:**
+        1. label: "Swarm", description: "Parallel reviewers per file chunk and lens, then skeptics verify each finding (track reviews only)"
+        2. label: "Single agent", description: "One subagent reviews the whole change"
+
+2.  **If "Swarm", Ask for Size:** Use the `AskUserQuestion` tool with:
+    - **header:** "Agents"
+    - **question:** "How many agents may run at once?"
+    - **multiSelect:** false
+    - **options:**
+        1. label: "15 (Recommended)", description: "Default swarm size"
+        2. label: "5", description: "Smaller swarm"
+        3. label: "10", description: "Medium swarm"
+        4. label: "25", description: "Large swarm; Claude Code runs at most 16 at once unless CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS is raised"
+    - A custom answer is any whole number of 1 or more; do not cap it. Remember it as `maxParallel`. Swarm agents never run more than `maxParallel` at once: the workflow enforces it, and in fallback mode you send at most `maxParallel` Agent calls per message.
+    - Choosing "Swarm" is the user's explicit request to run the `conductor:swarm-review` workflow.
+
+3.  **Remember the Mode** and continue with **2.0 REVIEW PROTOCOL**. Scope selection (2.1) and the completion phase (3.0) always run here in the main session; the mode decides who performs 2.2 to 2.4.
+
+---
+
 ## 2.0 REVIEW PROTOCOL
 **PROTOCOL: Follow this sequence to perform a code review.**
 
@@ -107,6 +145,9 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
             2. label: "No", description: "Specify a different review scope"
     -   If no track is in progress, or user declines, ask: "What would you like to review? (Enter a track name, or type 'current' for uncommitted changes)"
 3.  **Confirm Scope:** Ensure you and the user agree on what is being reviewed.
+4.  **Hand Off by Mode:**
+    -   **Swarm:** If the scope is a track, execute section **2.5 SWARM REVIEW** instead of 2.2 to 2.4, then continue with **3.0 COMPLETION PHASE**. If the scope is uncommitted changes (`current`), tell the user the swarm reviews tracks only and use Single agent.
+    -   **Single agent:** Use the `Agent` tool to start one `general-purpose` subagent with `model: "opus"`. Give it the confirmed scope and the path `${CLAUDE_SKILL_DIR}/SKILL.md`, and instruct it to execute sections **2.2**, **2.3** and **2.4** of that file for this scope, never ask the user anything, and return the report exactly in the 2.4 format plus any open question. If it returns a question, ask it with the `AskUserQuestion` tool and send the answer back with `SendMessage` (or a new subagent). Show the user the report, then continue with **3.0 COMPLETION PHASE**.
 
 ### 2.2 Retrieve Context
 1.  **Load Project Context:**
@@ -184,6 +225,29 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
 - old_code
 + new_code
 ```
+
+---
+
+### 2.5 Swarm Review
+**PROTOCOL: Review a track with parallel agents. Only used when "Swarm" was chosen in 1.2 EXECUTION MODE.**
+
+1.  **Engine:** If the `Workflow` tool is available to you, use **workflow mode**. If not, announce once: "Dynamic workflows are not available in this session (enable them in /config). Running the swarm with parallel subagents instead." and use **fallback mode**.
+
+2.  **Revision Range:** From the track's `plan.md`, collect the recorded commit SHAs. The range is `<first sha>^..<last sha>`. Verify each end with `git rev-parse`.
+
+3.  **Changed Files:** Run `git diff --numstat <range>`. Build `files: [{ path, lines }]` with `lines` = added + deleted. Skip binary entries (`-`), lock files and generated assets.
+
+4.  **Run the Swarm:**
+    -   **Workflow mode:** Call the `Workflow` tool with `name: "conductor:swarm-review"` and `args: { range: "<range>", planPath: "<relative>", specPath: "<relative>", files: [...], maxParallel: <N> }` (a JSON object, not a string). Tell the user in one line that the review swarm started and that `/workflows` shows progress, then END YOUR TURN and do nothing else. The task notification with the result re-invokes you; continue with step 5.
+    -   **Resuming a workflow run:** Every `Workflow` call returns a run ID (`wf_...`) and a script path. Remember both, together with the exact `args` you passed, and tell the user the run ID in your one-line start message. If the run does not complete — its notification reports it failed or was stopped, or the user interrupted it and asks to continue — resume it instead of starting over:
+        1. If the run is still going (check `/workflows` or the task list), stop it first.
+        2. Call the `Workflow` tool again with the same `name`, the SAME `args` (unchanged, or the cache misses — only `maxParallel` may change, e.g. when the user asks for more or fewer agents), and `resumeFromRunId: "<run ID>"`. If the tool refuses the name, pass `scriptPath: "<script path>"` instead of `name`.
+        3. Agents that already finished return their cached results instantly; only the rest run live.
+        4. Handle the new result as if it were the first one.
+        Resume only works within the same Claude Code session.
+    -   **Fallback mode:** Dispatch `conductor:reviewer` Agents yourself: one with lens `tests` over the whole range (it runs the test suite), plus one per lens `intent`, `style`, `correctness` for each chunk of files (about 300 changed lines per chunk). At most `maxParallel` Agent calls per message. Merge duplicate findings (same file and start line), then for each Critical or High finding dispatch one `conductor:reviewer` as a skeptic and drop the finding if it is refuted.
+
+5.  **Report:** Write the report exactly in the format of section **2.4 Output Findings**, using the confirmed `findings` and the `tests` result. If `unreviewedSlices` is above zero, say so in the Summary.
 
 ---
 

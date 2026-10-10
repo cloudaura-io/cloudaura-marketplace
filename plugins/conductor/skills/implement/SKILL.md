@@ -116,10 +116,10 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
     - **multiSelect:** false
     - **options:**
         1. label: "15 (Recommended)", description: "Default swarm size"
-        2. label: "5", description: "Smaller swarm, fewer parallel test runs"
+        2. label: "5", description: "Smaller swarm"
         3. label: "10", description: "Medium swarm"
         4. label: "25", description: "Large swarm; Claude Code runs at most 16 at once unless CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS is raised"
-    - A custom answer is any whole number of 1 or more; do not cap it. Remember it as `maxParallel`.
+    - A custom answer is any whole number of 1 or more; do not cap it. Remember it as `maxParallel`. Swarm agents never run more than `maxParallel` at once: the workflow enforces it, and in fallback mode you send at most `maxParallel` Agent calls per message.
     - Choosing "Swarm" is the user's explicit request to run the `conductor:swarm-implement` workflow.
 
 3.  **Remember the Mode** and continue with **2.0 TRACK SELECTION**. The mode is used in section **3.0**, step 4.
@@ -175,7 +175,7 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
 
 4.  **Execute Tasks and Update Track Plan:**
     a. **Announce:** State that you will now execute the tasks from the track's **Implementation Plan** by following the procedures in the **Workflow**.
-    b. **Swarm Mode:** Read `${CLAUDE_SKILL_DIR}/../swarm/SKILL.md`. Execute its section **1.1** steps **4. Clean Tree** and **5. Engine**, its section **1.2 RESUMING A WORKFLOW RUN** when needed, and its section **2.0 IMPLEMENT MODE** steps 1 and 2 for the track selected here, with the `maxParallel` chosen in **1.2 EXECUTION MODE**. Skip its other mode and size questions. When every phase is checkpointed, continue with step 5 below instead of the swarm's Finalize step.
+    b. **Swarm Mode:** Execute section **3.1 SWARM IMPLEMENTATION**, then continue with step 5 below.
     c. **Single-Agent Mode:** For each phase of the **Implementation Plan**, in order, skipping phases that already have a `[checkpoint: <sha>]`:
         i. **Dispatch:** Use the `Agent` tool to start one `general-purpose` subagent with `model: "opus"`. Give it the track id, the relative paths of the **Specification**, **Implementation Plan** and **Workflow**, and the phase name, and instruct it to:
             - Implement every `[ ]` or `[~]` task of this phase in order, following the "Task Workflow" section of the **Workflow** precisely (implementation, testing, commits, git notes, plan updates). Skip the `Conductor - User Manual Verification` meta-task.
@@ -198,6 +198,59 @@ To find a file (e.g., "**Product Definition**") within a specific context (Proje
     -   This requires finding the specific heading for the track (e.g., `## [~] Track: <Description>`) and replacing it with the completed status (e.g., `## [x] Track: <Description>`).
     -   **Commit Changes:** Stage the **Tracks Registry** file and commit with the message `chore(conductor): Mark track '<track_description>' as complete`.
     -   Announce that the track is fully complete and the tracks file has been updated.
+
+---
+
+## 3.1 SWARM IMPLEMENTATION
+**PROTOCOL: Build the track's tasks with parallel agents. Only used when "Swarm" was chosen in 1.2 EXECUTION MODE.**
+
+1.  **Clean Tree:** Run `git status --porcelain`. Workers build in git worktrees, which only contain committed files. If the output is not empty, use the `AskUserQuestion` tool with:
+    - **header:** "Changes"
+    - **question:** "There are uncommitted changes. Worktrees won't see them. How do you want to proceed?"
+    - **multiSelect:** false
+    - **options:**
+        1. label: "Commit them", description: "Commit all current changes, then continue"
+        2. label: "Stop", description: "Stop so you can handle them yourself"
+    - On "Commit them": stage everything and commit with `chore(conductor): Save work before swarm`. On "Stop": halt.
+
+2.  **Engine:** If the `Workflow` tool is available to you, use **workflow mode**. If not, announce once: "Dynamic workflows are not available in this session (enable them in /config). Running the swarm with parallel subagents instead." and use **fallback mode**.
+
+3.  **Paths:** Note the relative paths (from the repository root) of the **Specification**, **Implementation Plan** and **Workflow**. Agents only ever get relative paths. If `[~]` tasks are left from an interrupted swarm in an earlier session, run `git worktree prune` first.
+
+4.  **For each phase of the plan, in order, skip phases that already have a `[checkpoint: <sha>]`:**
+
+    a.  **Resume In-Flight Tasks:** For every task of this phase marked `[~]`, finish it yourself in the main checkout by following the "Task Workflow" of the **Workflow**.
+
+    b.  **Collect Pending Tasks:** List the `[ ]` top-level tasks of this phase, excluding the `Task: Conductor - User Manual Verification ...` meta-task. Give each an id `p<phase number>-t<task number>` and a text made of the task line plus its indented sub-task lines.
+
+    c.  **Small Phase:** If there is at most one pending task, implement it yourself by following the "Task Workflow" and go to step **g**. A swarm is not worth the worktree overhead.
+
+    d.  **Mark Batch:** In `plan.md`, change every pending task of this phase from `[ ]` to `[~]`. Stage `plan.md` and the **Tracks Registry** and commit with `conductor(plan): Start phase '<phase name>' with swarm`. Workers branch from this commit.
+
+    e.  **Run the Swarm:**
+        -   **Workflow mode:** Call the `Workflow` tool with `name: "conductor:swarm-implement"` and `args: { phase: "<phase name>", workflowPath: "<relative>", specPath: "<relative>", planPath: "<relative>", tasks: [{ id, text }, ...], maxParallel: <N> }` (a JSON object, not a string). The call returns immediately and runs in the background. Tell the user in one line that the swarm started for this phase and that `/workflows` shows progress, then END YOUR TURN and do nothing else. A task notification with the workflow result re-invokes you; continue with step **f**. If the result is truncated, read the output file the notification names.
+        -   **Resuming a workflow run:** Every `Workflow` call returns a run ID (`wf_...`) and a script path. Remember both, together with the exact `args` you passed, and tell the user the run ID in your one-line start message. If the run does not complete — its notification reports it failed or was stopped, or the user interrupted it and asks to continue — resume it instead of starting over:
+        1. If the run is still going (check `/workflows` or the task list), stop it first.
+        2. Call the `Workflow` tool again with the same `name`, the SAME `args` (unchanged, or the cache misses — only `maxParallel` may change, e.g. when the user asks for more or fewer agents), and `resumeFromRunId: "<run ID>"`. If the tool refuses the name, pass `scriptPath: "<script path>"` instead of `name`.
+        3. Agents that already finished return their cached results instantly; only the rest run live.
+        4. Handle the new result as if it were the first one.
+        Resume only works within the same Claude Code session. The integrator skips tasks that are already `[x]`, so a resumed run does not merge twice.
+        -   **Fallback mode:** Do the same work yourself:
+            1. Group the pending tasks into ordered waves: tasks in one wave must not depend on each other's code or edit the same files. When unsure, put a task in its own wave.
+            2. For each wave, dispatch one `conductor:task-worker` Agent per task with the same task text and relative paths the workflow would pass. Send at most `maxParallel` Agent calls in one message; dispatch the rest after those return. Each worker ends with a JSON object (`taskId`, `status`, `sha`, `worktreePath`, `branch`, `summary`, `files`, `reason`, `question`).
+            3. Dispatch one `conductor:integrator` Agent with the wave's `done` tasks in plan order (`taskId`, `task`, `sha`, `summary`, `files`). It ends with a JSON object (`merged`, `failed`, `testCommand`, `testsPassed`, `testOutput`).
+            4. If `testsPassed` is false, stop starting new waves; the remaining tasks are "not started".
+
+    f.  **Handle the Result** (`merged`, `failed`, `notStarted`, `worktrees`, `testsPassed`, `testOutput`):
+        -   **Clean Up Worktrees:** For each entry in `worktrees`, run `git worktree remove --force <path>` and `git branch -D <branch>`, then `git worktree prune`. Their commits are already cherry-picked or abandoned.
+        -   **Report:** Tell the user which tasks were merged (with their new short SHAs), which failed and why, and which were not started.
+        -   **Failing Tests:** If `testsPassed` is false, show `testOutput` and follow the **Workflow**'s debugging rule (at most two fix attempts, then ask the user for guidance) before continuing.
+        -   **Agent Questions:** For every failed task with a non-empty `question`, ask it with the `AskUserQuestion` tool (offer the sensible answers as options) and use the answer when you implement that task.
+        -   **Leftovers:** Implement every failed or not-started task yourself, one by one, by following the "Task Workflow" (they are already `[~]`).
+
+    g.  **Verify Plan State:** Every task of this phase except the meta-task must now be `[x]` with a short SHA in backticks (`- [x] Task: <name> `abc1234``). Fix any line that is not, from `git log`.
+
+    h.  **Phase Checkpoint:** Execute the "Phase Completion Verification and Checkpointing Protocol" of the **Workflow**, asking the manual verification question with the `AskUserQuestion` tool. Then mark the `Conductor - User Manual Verification` meta-task `[x]`.
 
 ---
 

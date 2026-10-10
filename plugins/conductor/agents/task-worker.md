@@ -1,6 +1,6 @@
 ---
 name: task-worker
-description: Implements one Conductor plan task in an isolated git worktree and commits it. Dispatched by /conductor:swarm; not for direct invocation.
+description: Implements one Conductor plan task in an isolated git worktree and commits it. Dispatched by Conductor swarm mode; not for direct invocation.
 model: inherit
 isolation: worktree
 tools: Read, Write, Edit, Bash, Glob, Grep

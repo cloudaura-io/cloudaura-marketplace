@@ -21,7 +21,7 @@ The philosophy behind Conductor is simple: control your code. By treating contex
 - **Build on existing projects**: Intelligent initialization for both new (Greenfield) and existing (Brownfield) projects.
 - **Smart revert**: A git-aware revert command that understands logical units of work (tracks, phases, tasks) rather than just commit hashes.
 - **Interactive forms**: Native Claude Code UI with keyboard navigation.
-- **Swarm mode**: Implement or review a track with parallel agents (15 by default, configurable) via Claude Code dynamic workflows.
+- **Swarm mode**: `/conductor:implement` and `/conductor:review` can run a swarm of parallel agents (15 by default) via Claude Code dynamic workflows.
 
 ## Interactive Forms
 
@@ -62,7 +62,6 @@ Start a new Claude Code session and type `/conductor:` - you should see availabl
 - `/conductor:status`
 - `/conductor:revert`
 - `/conductor:review`
-- `/conductor:swarm`
 
 ## Usage
 
@@ -167,29 +166,20 @@ During implementation, you can also:
 
 ### 5. Swarm Mode (Parallel Agents)
 
-`/conductor:swarm` runs the same lifecycle with a swarm of agents working at once (15 by default). `/conductor:implement` offers the same swarm as its first question.
+`/conductor:implement` and `/conductor:review` both start with two questions: **Swarm** or **Single agent**, and for a swarm how many agents may run at once (15 by default, any number of 1 or more). With **Single agent**, one subagent does the work. In both modes every question and the manual verification come to you in the main window; agents never ask you directly.
 
-```bash
-/conductor:swarm implement "dark mode toggle"
-/conductor:swarm review "dark mode toggle"
-
-# Swarm size: a flag or plain words
-/conductor:swarm implement "dark mode toggle" --max 10
-/conductor:swarm implement dark mode toggle, max 3 agents
-```
-
-- **implement**: per phase, a planner groups independent tasks into waves. Each task is built by a `task-worker` agent in its own git worktree. After each wave an `integrator` agent cherry-picks the commits one by one, adds git notes, updates `plan.md` and runs the full test suite. Failed tasks fall back to sequential implementation. The phase checkpoint and manual verification stay with you, as in `/conductor:implement`.
-- **review**: `reviewer` agents check every chunk of the track diff through the intent, style and correctness lenses (one more runs the tests), then skeptics try to refute each finding before it reaches the report.
+- **implement**: per phase, a planner groups independent tasks into waves. Each task is built by a `task-worker` agent in its own git worktree. After each wave an `integrator` agent cherry-picks the commits one by one, adds git notes, updates `plan.md` and runs the full test suite. Failed tasks fall back to sequential implementation. The phase checkpoint and manual verification stay with you.
+- **review** (tracks only): `reviewer` agents check every chunk of the track diff through the intent, style and correctness lenses (one more runs the tests), then skeptics try to refute each finding before it reaches the report.
 
 **Requirements:**
 - Dynamic workflows enabled (`/config` -> Dynamic workflows). Without them the swarm falls back to parallel subagents.
-- A clean git tree: worktrees only see committed files. The skill offers to commit pending changes.
+- A clean git tree for implement: worktrees only see committed files. Conductor offers to commit pending changes.
 - Swarm size is not capped by Conductor. Claude Code runs at most 16 workflow agents at once by default; raise it with `CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS` to run bigger swarms.
 - To skip the approval prompt, allow `Workflow(conductor:swarm-implement)` and `Workflow(conductor:swarm-review)` in your permissions.
 
 An interrupted or failed swarm run can be resumed in the same session: completed agents replay from cache (`resumeFromRunId`), so finished tasks are not rebuilt. You can change the swarm size when resuming.
 
-Parallel workers run tests at the same time; if your suite binds fixed ports or shared databases, keep tasks within a phase independent or use `/conductor:implement`.
+Parallel workers run tests at the same time; if your suite binds fixed ports or shared databases, keep tasks within a phase independent or choose Single agent.
 
 ## Commands Reference
 
@@ -202,7 +192,6 @@ Parallel workers run tests at the same time; if your suite binds fixed ports or 
 | `/conductor:status` | Displays the current progress of the tracks file and active tracks. | Reads `conductor/tracks.md` |
 | `/conductor:revert` | Reverts a track, phase, or task by analyzing git history. | Reverts git history |
 | `/conductor:review` | Reviews completed work against guidelines and the plan. | Reads `plan.md`, `product-guidelines.md` |
-| `/conductor:swarm` | Implements or reviews a track with parallel agents (15 by default, `--max N`), via dynamic workflows. | `conductor/tracks.md`<br>`conductor/tracks/<id>/plan.md` |
 
 ## Resources
 

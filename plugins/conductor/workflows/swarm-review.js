@@ -1,7 +1,7 @@
 export const meta = {
   name: 'swarm-review',
   description: 'Conductor swarm: review a track diff by lens x file chunk, then adversarially verify findings (default 15 agents at once)',
-  whenToUse: 'Run only by /conductor:swarm review, which passes the revision range and changed files in args. If invoked with no args (a user typed the bare slash command), do not call Workflow: tell the user to run /conductor:swarm review.',
+  whenToUse: 'Run only by /conductor:review in Swarm mode, which passes the revision range and changed files in args. If invoked with no args (a user typed the bare slash command), do not call Workflow: tell the user to run /conductor:review and choose Swarm.',
   phases: [
     { title: 'Find', detail: 'one reviewer per lens x file chunk, plus one test run' },
     { title: 'Verify', detail: 'skeptics try to refute each finding (3 for Critical/High, 1 otherwise)' },
@@ -14,7 +14,7 @@ let A = args
 if (typeof A === 'string') { try { A = JSON.parse(A) } catch (e) { A = null } }
 if (!A || !A.range || !Array.isArray(A.files) || !A.files.length) {
   log('started without a diff to review -- nothing dispatched')
-  return { started: false, next: 'Tell the user to run /conductor:swarm review; this workflow needs the range and files that skill supplies.' }
+  return { started: false, next: 'Tell the user to run /conductor:review and choose Swarm; this workflow needs the range and files that skill supplies.' }
 }
 
 // Swarm size from args.maxParallel (default 15). No upper cap here: the Claude Code runtime

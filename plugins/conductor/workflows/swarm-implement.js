@@ -1,7 +1,7 @@
 export const meta = {
   name: 'swarm-implement',
   description: 'Conductor swarm: implement one plan phase with parallel task workers in isolated worktrees (default 15 at once)',
-  whenToUse: 'Run only by /conductor:swarm implement, which passes the phase and its pending tasks in args. If invoked with no args (a user typed the bare slash command), do not call Workflow: tell the user to run /conductor:swarm implement.',
+  whenToUse: 'Run only by /conductor:implement in Swarm mode, which passes the phase and its pending tasks in args. If invoked with no args (a user typed the bare slash command), do not call Workflow: tell the user to run /conductor:implement and choose Swarm.',
   phases: [
     { title: 'Plan', detail: 'group pending tasks into dependency-free waves' },
     { title: 'Build', detail: 'one task-worker per task in its own worktree, at most maxParallel at once' },
@@ -13,7 +13,7 @@ let A = args
 if (typeof A === 'string') { try { A = JSON.parse(A) } catch (e) { A = null } }
 if (!A || !Array.isArray(A.tasks) || !A.tasks.length) {
   log('started without a phase to implement -- nothing dispatched')
-  return { started: false, next: 'Tell the user to run /conductor:swarm implement; this workflow needs the phase and tasks that skill supplies.' }
+  return { started: false, next: 'Tell the user to run /conductor:implement and choose Swarm; this workflow needs the phase and tasks that skill supplies.' }
 }
 
 // Swarm size from args.maxParallel (default 15). No upper cap here: the Claude Code runtime
