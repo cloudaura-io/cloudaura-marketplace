@@ -151,7 +151,7 @@ Check whether the **Repositories** file (`conductor/repos.md`) exists. If it doe
     -   If no track is in progress, or user declines, ask: "What would you like to review? (Enter a track name, or type 'current' for uncommitted changes)"
 3.  **Confirm Scope:** Ensure you and the user agree on what is being reviewed.
 4.  **Hand Off by Mode:**
-    -   **Swarm:** If the scope is a track, execute section **2.5 SWARM REVIEW** instead of 2.2 to 2.4, then continue with **3.0 COMPLETION PHASE**. If the scope is uncommitted changes (`current`), tell the user the swarm reviews tracks only and use Single agent. If `conductor/repos.md` exists (multi-repo workspace), tell the user the swarm does not support multi-repo workspaces yet and use Single agent.
+    -   **Swarm:** If the scope is a track, execute section **2.5 SWARM REVIEW** instead of 2.2 to 2.4, then continue with **3.0 COMPLETION PHASE**. If the scope is uncommitted changes (`current`), tell the user the swarm reviews tracks only and use Single agent.
     -   **Single agent:** Use the `Agent` tool to start one `general-purpose` subagent with `model: "opus"`. Give it the confirmed scope and the path `${CLAUDE_SKILL_DIR}/SKILL.md`, and instruct it to execute sections **2.2**, **2.3** and **2.4** of that file for this scope, never ask the user anything, and return the report exactly in the 2.4 format plus any open question. If it returns a question, ask it with the `AskUserQuestion` tool and send the answer back with `SendMessage` (or a new subagent). Show the user the report, then continue with **3.0 COMPLETION PHASE**.
 
 ### 2.2 Retrieve Context
@@ -242,6 +242,8 @@ Check whether the **Repositories** file (`conductor/repos.md`) exists. If it doe
 2.  **Revision Range:** From the track's `plan.md`, collect the recorded commit SHAs. The range is `<first sha>^..<last sha>`. Verify each end with `git rev-parse`.
 
 3.  **Changed Files:** Run `git diff --numstat <range>`. Build `files: [{ path, lines }]` with `lines` = added + deleted. Skip binary entries (`-`), lock files and generated assets.
+
+    **Multi-repo workspace** (`conductor/repos.md` exists): skip steps 2 and 3 above. For every repository in the track's `metadata.json` `"repos"`, the range is `<base branch>...<track branch>` from the **Repositories** file; run `git -C <path> diff --numstat <range>` and add each file as `{ repo: "<name>", path, lines }`. Pass `repos: [{ name, path, range }, ...]` instead of `range` in the workflow `args`; `tests` in the result is then a list with one entry per repository. In fallback mode, give every reviewer the repository it reviews, and run one `tests` reviewer per repository.
 
 4.  **Run the Swarm:**
     -   **Workflow mode:** Call the `Workflow` tool with `name: "conductor:swarm-review"` and `args: { range: "<range>", planPath: "<relative>", specPath: "<relative>", files: [...], maxParallel: <N> }` (a JSON object, not a string). Tell the user in one line that the review swarm started and that `/workflows` shows progress, then END YOUR TURN and do nothing else. The task notification with the result re-invokes you; continue with step 5.

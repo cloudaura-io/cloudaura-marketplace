@@ -107,8 +107,6 @@ Check whether the **Repositories** file (`conductor/repos.md`) exists. If it doe
 
 **User questions stay in this main session.** Subagents and swarm agents never ask the user anything; they return questions in their results. Ask every question in this protocol — including the ones the **Workflow** phrases as plain text (manual verification, yes/no confirmations, doc sync approvals) — with the `AskUserQuestion` tool, here.
 
-0.  **Multi-Repo Check:** If `conductor/repos.md` exists, swarm mode is not available yet: its worktrees come from a single repository. Announce: "This is a multi-repo workspace; swarm mode does not support it yet, so one subagent will implement the track." Use **Single agent** and skip the questions below.
-
 1.  **Ask for Mode:** Use the `AskUserQuestion` tool with:
     - **header:** "Mode"
     - **question:** "How should this track be implemented?"
@@ -225,6 +223,16 @@ Check whether the **Repositories** file (`conductor/repos.md`) exists. If it doe
 
 ## 3.1 SWARM IMPLEMENTATION
 **PROTOCOL: Build the track's tasks with parallel agents. Only used when "Swarm" was chosen in 1.2 EXECUTION MODE.**
+
+0.  **Multi-Repo Workspace:** If `conductor/repos.md` exists, the swarm runs across repositories. Apply these changes to the steps below, and follow the Multi-Repo Protocol for everything else:
+    -   **Phase repositories:** For each phase, the repositories it works in are named in its heading (e.g. `## Phase 2: Sync engine (api, portal)`). If a heading names none, ask the user which repositories the phase touches with the `AskUserQuestion` tool (`multiSelect: true`, options from the **Repositories** table).
+    -   **Clean Tree (step 1)** runs per phase repository with `git -C <path> status --porcelain`, before any track branch is created. Offer "Commit them" (commit in that repository on its current branch), "Stash them" (`git -C <path> stash push -u -m "conductor: before swarm <track_id>"`, tell the user to `stash pop` later) and "Stop".
+    -   **Track branches:** Before the swarm starts on a phase, prepare the track branch in every phase repository (rule 4 of the protocol) and add the repositories to `"repos"` in `metadata.json`. Workers branch their worktrees from these track branches.
+    -   **Mark Batch (step 4d)** commits `plan.md`, the **Tracks Registry** and `metadata.json` in the `conductor/` repository.
+    -   **Run the Swarm (step 4e):** add `repos: [{ name, path, trackBranch }, ...]` (the phase repositories, `path` relative to the project root) to the workflow `args`. In fallback mode, dispatch `conductor:repo-worker` Agents instead of `conductor:task-worker`, with the same repository list in their prompt; each returns `commits` and `worktrees` lists. The integrator gets each task's `commits` and the same repository list.
+    -   **Clean Up Worktrees (step 4f):** each `worktrees` entry has a `repo`: run `git -C <path> worktree remove --force <worktree path>` and `git -C <path> branch -D <branch>`, then `git -C <path> worktree prune` in each repository.
+    -   **Verify Plan State (step 4g):** task references are `<repo>@<sha7>`, space-separated when a task spans repositories.
+    -   **Leftovers** are implemented in the real checkouts, on the track branches.
 
 1.  **Clean Tree:** Run `git status --porcelain`. Workers build in git worktrees, which only contain committed files. If the output is not empty, use the `AskUserQuestion` tool with:
     - **header:** "Changes"

@@ -34,7 +34,13 @@ async function pool(items, fn) {
   return out
 }
 
-const ctx = `Track files (paths relative to the repository root, which is your working directory): workflow ${A.workflowPath}, spec ${A.specPath}, plan ${A.planPath}. Phase: "${A.phase}".`
+// Multi-repo workspace: args.repos = [{ name, path, trackBranch }]. The project root is not a git
+// repository, so workers cannot get a harness worktree; they make their own in each repository.
+const MULTI = Array.isArray(A.repos) && A.repos.length > 0
+const repoList = MULTI ? A.repos.map(r => `${r.name} at ${r.path} (track branch ${r.trackBranch})`).join('; ') : ''
+const ctx = MULTI
+  ? `Multi-repo workspace: the project root (your working directory) is not a git repository; it is one system spread across these repositories: ${repoList}. Follow the Multi-Repo Protocol in conductor/repos.md. Track files (relative to the project root, read-only for workers): workflow ${A.workflowPath}, spec ${A.specPath}, plan ${A.planPath}. Phase: "${A.phase}".`
+  : `Track files (paths relative to the repository root, which is your working directory): workflow ${A.workflowPath}, spec ${A.specPath}, plan ${A.planPath}. Phase: "${A.phase}".`
 const byId = Object.fromEntries(A.tasks.map(t => [t.id, t]))
 const order = id => A.tasks.findIndex(t => t.id === id)
 
@@ -43,7 +49,7 @@ phase('Plan')
 let waves = A.tasks.map(t => [t.id])
 if (A.tasks.length > 1) {
   const plan = await agent(
-    `${ctx}\nGroup these pending tasks into ordered waves. Tasks in one wave are built in parallel in separate worktrees, so they must not depend on each other's code and should not edit the same files. A task that needs another task's output goes in a later wave. Read the plan, spec and relevant code to judge. Do not edit anything. Use the task ids exactly.\n${JSON.stringify(A.tasks, null, 1)}`,
+    `${ctx}\nGroup these pending tasks into ordered waves. Tasks in one wave are built in parallel in separate worktrees, so they must not depend on each other's code and should not edit the same files.${MULTI ? ' Tasks that only touch different repositories never conflict on files, but a task can still depend on another repository\'s output (e.g. a client needing a new API endpoint).' : ''} A task that needs another task's output goes in a later wave. Read the plan, spec and relevant code to judge. Do not edit anything. Use the task ids exactly.\n${JSON.stringify(A.tasks, null, 1)}`,
     {
       label: 'plan-waves', phase: 'Plan',
       schema: {
@@ -62,6 +68,25 @@ const skipped = A.tasks.map(t => t.id).filter(id => !seen.has(id))
 if (skipped.length) { log(`planner skipped ${skipped.join(', ')} -- added as a final wave`); waves.push(skipped) }
 log(`${waves.length} wave(s): ${waves.map(w => w.length).join(', ')} task(s)`)
 
+const COMMIT = {
+  type: 'object',
+  properties: { repo: { type: 'string' }, sha: { type: 'string' }, worktreePath: { type: 'string' }, branch: { type: 'string' } },
+  required: ['repo', 'sha', 'worktreePath', 'branch'],
+}
+const BUILT_MULTI = {
+  type: 'object',
+  properties: {
+    taskId: { type: 'string' },
+    status: { type: 'string', enum: ['done', 'failed'] },
+    commits: { type: 'array', items: COMMIT, description: 'one entry per repository the task committed to' },
+    worktrees: { type: 'array', items: COMMIT, description: 'every worktree created, committed or not (sha may be empty)' },
+    summary: { type: 'string' },
+    files: { type: 'array', items: { type: 'string' }, description: 'paths prefixed with the repository name, e.g. api/app/x.py' },
+    reason: { type: 'string' },
+    question: { type: 'string', description: 'question for the user, or empty' },
+  },
+  required: ['taskId', 'status', 'commits', 'worktrees', 'summary', 'files', 'reason', 'question'],
+}
 const BUILT = {
   type: 'object',
   properties: {
@@ -80,7 +105,7 @@ const BUILT = {
 const MERGED = {
   type: 'object',
   properties: {
-    merged: { type: 'array', items: { type: 'object', properties: { taskId: { type: 'string' }, sha: { type: 'string' } }, required: ['taskId', 'sha'] } },
+    merged: { type: 'array', items: { type: 'object', properties: { taskId: { type: 'string' }, sha: { type: 'string', description: 'multi-repo: space-separated <repo>@<sha7> references' } }, required: ['taskId', 'sha'] } },
     failed: { type: 'array', items: { type: 'object', properties: { taskId: { type: 'string' }, reason: { type: 'string' } }, required: ['taskId', 'reason'] } },
     testCommand: { type: 'string' },
     testsPassed: { type: 'boolean' },
@@ -95,10 +120,19 @@ for (let w = 0; w < waves.length; w++) {
   const ids = waves[w]
   const built = await pool(ids, id => agent(
     `${ctx}\nYour task (id ${id}):\n${byId[id].text}`,
-    { label: `task:${id}`, phase: 'Build', agentType: 'conductor:task-worker', isolation: 'worktree', schema: BUILT }))
+    MULTI
+      ? { label: `task:${id}`, phase: 'Build', agentType: 'conductor:repo-worker', schema: BUILT_MULTI }
+      : { label: `task:${id}`, phase: 'Build', agentType: 'conductor:task-worker', isolation: 'worktree', schema: BUILT }))
 
   const ok = []
   built.forEach((b, i) => {
+    if (MULTI) {
+      if (b) (b.worktrees || []).forEach(t => out.worktrees.push({ repo: t.repo, path: t.worktreePath, branch: t.branch }))
+      const commits = b ? (b.commits || []).filter(c => c.sha) : []
+      if (b && b.status === 'done' && commits.length) ok.push({ taskId: ids[i], task: byId[ids[i]].text, commits: commits.map(c => ({ repo: c.repo, sha: c.sha })), summary: b.summary, files: b.files })
+      else out.failed.push({ taskId: ids[i], reason: b ? (b.reason || 'no commit') : 'worker died', question: (b && b.question) || '' })
+      return
+    }
     if (b && b.worktreePath) out.worktrees.push({ path: b.worktreePath, branch: b.branch })
     if (b && b.status === 'done' && b.sha) ok.push({ taskId: ids[i], task: byId[ids[i]].text, sha: b.sha, summary: b.summary, files: b.files })
     else out.failed.push({ taskId: ids[i], reason: b ? (b.reason || 'no commit') : 'worker died', question: (b && b.question) || '' })

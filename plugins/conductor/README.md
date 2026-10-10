@@ -174,7 +174,7 @@ During implementation, you can also:
 **Requirements:**
 - Dynamic workflows enabled (`/config` -> Dynamic workflows). Without them the swarm falls back to parallel subagents.
 - A clean git tree for implement: worktrees only see committed files. Conductor offers to commit pending changes.
-- A single repository: multi-repo workspaces (see below) use Single agent.
+- In a multi-repo workspace (see below), `repo-worker` agents make their own worktrees in each repository a task touches, branched from the track branch; the integrator cherry-picks into each repository's checkout and records `<repo>@<sha>` references.
 - Swarm size is not capped by Conductor. Claude Code runs at most 16 workflow agents at once by default; raise it with `CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS` to run bigger swarms.
 - To skip the approval prompt, allow `Workflow(conductor:swarm-implement)` and `Workflow(conductor:swarm-review)` in your permissions.
 
