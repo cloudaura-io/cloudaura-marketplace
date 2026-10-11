@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/cloudaura-io/cloudaura-marketplace/compare/conductor-v0.7.0...conductor-v0.8.0) (2026-10-10)
+
+
+### Features
+
+* **conductor:** add research command with swarm, web sources and recorded decisions ([#35](https://github.com/cloudaura-io/cloudaura-marketplace/issues/35)) ([457e78a](https://github.com/cloudaura-io/cloudaura-marketplace/commit/457e78a2744e91938d078030916e5130c40a683a))
+
 ## [0.7.0](https://github.com/cloudaura-io/cloudaura-marketplace/compare/conductor-v0.6.0...conductor-v0.7.0) (2026-10-10)
 
 
