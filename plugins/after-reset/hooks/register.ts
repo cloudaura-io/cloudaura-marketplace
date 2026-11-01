@@ -205,7 +205,7 @@ export const register: Register = on => {
     }
 
     return next(e)
-  })
+  }).catch(($, e, next) => next(e))
 
   on('command.run', { command: 'after-reset' }, async ($, e) => {
     const now = await $.clock.now()

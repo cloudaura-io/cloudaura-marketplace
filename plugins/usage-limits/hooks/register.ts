@@ -85,7 +85,7 @@ export const register: Register = on => {
     }
 
     return next(e)
-  })
+  }).catch(($, e, next) => next(e))
 
   on('session.measure', async ($, e, next) => {
     if (e.changed.includes('rateLimits') && e.rateLimits.length > 0) {

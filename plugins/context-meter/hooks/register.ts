@@ -142,7 +142,7 @@ export const register: Register = on => {
     }
 
     return next(e)
-  })
+  }).catch(($, e, next) => next(e))
 
   // Drawn in the engine's line's place rather than as its `tail`, which is dim
   // text alone. First of the mods' parts on the row (hint.ts's PARTS).
