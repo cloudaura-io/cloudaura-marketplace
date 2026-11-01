@@ -15,6 +15,42 @@
       "source": "./plugins/conductor",
       "category": "development",
       "homepage": "https://github.com/cloudaura-io/conductor-claude-code"
+    },
+    {
+      "name": "context-meter",
+      "description": "Shows context window fill (tokens and %) and how much the last turn added, on the line under the prompt",
+      "author": {
+        "name": "truemarin"
+      },
+      "source": "./plugins/context-meter",
+      "category": "productivity"
+    },
+    {
+      "name": "cache-timer",
+      "description": "Counts down the prompt cache's TTL on the line under the prompt, with a toast before it expires",
+      "author": {
+        "name": "truemarin"
+      },
+      "source": "./plugins/cache-timer",
+      "category": "productivity"
+    },
+    {
+      "name": "usage-limits",
+      "description": "Shows the 5-hour and weekly rate-limit windows with reset countdowns, on the line under the prompt",
+      "author": {
+        "name": "truemarin"
+      },
+      "source": "./plugins/usage-limits",
+      "category": "productivity"
+    },
+    {
+      "name": "after-reset",
+      "description": "/after-reset <prompt> sends a prompt once your usage limit resets, or at a time you name",
+      "author": {
+        "name": "truemarin"
+      },
+      "source": "./plugins/after-reset",
+      "category": "productivity"
     }
   ]
 }

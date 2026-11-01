@@ -1,0 +1,8 @@
+{
+  "name": "after-reset",
+  "version": "0.1.1",
+  "description": "/after-reset <prompt> sends a prompt once your usage limit resets, or at a time you name",
+  "author": { "name": "truemarin" },
+  "license": "Apache-2.0",
+  "types": "./types/index.d.ts"
+}

@@ -1,0 +1,17 @@
+{
+  "name": "cache-timer",
+  "version": "0.2.2",
+  "description": "Counts down the prompt cache's TTL from the main conversation's last API request, and warns before it expires.",
+  "author": { "name": "truemarin" },
+  "license": "Apache-2.0",
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "ttl": {
+      "type": "string",
+      "title": "Prompt cache TTL",
+      "description": "The cache lifetime to count down from, until the engine reports its own (on a model switch). 1h on a subscription; 5m under usage overage or a 5-minute API setup.",
+      "default": "1h",
+      "options": ["1h", "5m"]
+    }
+  }
+}
