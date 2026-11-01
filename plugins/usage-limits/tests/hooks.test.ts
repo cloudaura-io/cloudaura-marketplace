@@ -251,6 +251,17 @@ test('the countdown redraws every minute', async ($, on) => {
   expect(await world.shown($)).toBe('? for shortcuts · 5h ▰▰▱▱▱ 31% (2h12m)')
 })
 
+test('a second session.start keeps one redraw interval', async ($, on) => {
+  const world = engine(on)
+  world.live.rateLimits = [FIVE_HOUR]
+
+  await $.session.start(START)
+  await $.session.start(START)
+  await world.clock.advance(MIN)
+
+  expect(world.invalidated).toEqual(['ui.render'])
+})
+
 test('leaves the line alone when a turn reports no windows', async ($, on) => {
   const world = engine(on)
 

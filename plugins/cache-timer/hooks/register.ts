@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register } from 'claude-code'
+import type { EngineInterface, Register, Timer } from 'claude-code'
 
 import type { CacheTtl } from '../types'
 import { TTL_MS, WARN_MS, cacheSpans, formatCache } from './format'
@@ -21,6 +21,10 @@ async function left($: EngineInterface, configuredTtl: CacheTtl): Promise<Left |
 }
 
 let drawn: string | undefined
+
+// The countdown's interval. session.start runs once per load, never on /clear,
+// and a reload drops the old load's timers; cancelling first keeps it one.
+let ticker: Timer | undefined
 
 async function tick($: EngineInterface, configuredTtl: CacheTtl) {
   const now = await left($, configuredTtl)
@@ -49,7 +53,8 @@ export const register: Register = (on, options) => {
   on('session.start', async ($, e, next) => {
     // 0.1.0 pinned its own status line; the timer now rides the hint line.
     $.ui.status(undefined)
-    $.clock.every(1000, () => void tick($, configuredTtl))
+    ticker?.cancel()
+    ticker = $.clock.every(1000, () => void tick($, configuredTtl))
     return next(e)
   })
 

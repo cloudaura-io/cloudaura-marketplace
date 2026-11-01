@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register, SessionRateLimit } from 'claude-code'
+import type { EngineInterface, Register, SessionRateLimit, Timer } from 'claude-code'
 
 import type { Limit } from '../types'
 import { ALERT_AT, countdown, isLimitList, limitsSpans, name } from './format'
@@ -12,6 +12,10 @@ const limits = atom({ plugin: 'usage-limits', key: 'limits' } as const, [])
 const isFresh = atom({ plugin: 'usage-limits', key: 'isFresh' } as const, false)
 const hasNoWindows = atom({ plugin: 'usage-limits', key: 'hasNoWindows' } as const, false)
 const alerted = atom({ plugin: 'usage-limits', key: 'alerted' } as const, [])
+
+// The redraw's interval. session.start runs once per load, never on /clear,
+// and a reload drops the old load's timers; cancelling first keeps it one.
+let ticker: Timer | undefined
 
 function toLimits(windows: readonly SessionRateLimit[]): Limit[] {
   return windows.map(({ kind, percentUsed, resetsAt }) =>
@@ -67,7 +71,8 @@ export const register: Register = on => {
     await seed($)
 
     // Keeps the countdowns current between readings.
-    $.clock.every(REFRESH_MS, () => $.ui.invalidate('ui.render'))
+    ticker?.cancel()
+    ticker = $.clock.every(REFRESH_MS, () => $.ui.invalidate('ui.render'))
 
     return next(e)
   })

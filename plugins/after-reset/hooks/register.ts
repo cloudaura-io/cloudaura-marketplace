@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register, SessionRateLimit } from 'claude-code'
+import type { EngineInterface, Register, SessionRateLimit, Timer } from 'claude-code'
 
 import type { Job, Limit, Reading } from '../types'
 import { asReading, BUFFER_MS, listing, name, parse, pickReset, preview, timing, when } from './when'
@@ -13,6 +13,10 @@ const seenAt = atom({ plugin: 'after-reset', key: 'seenAt' } as const, null)
 
 // The status line last pinned, so a quiet tick pins nothing.
 let pinned: string | undefined
+
+// The tick's interval. session.start runs once per load, never on /clear, and
+// a reload drops the old load's timers; cancelling first keeps it one.
+let ticker: Timer | undefined
 
 // Whether a tick is under way, so the next one waits its turn.
 let isTicking = false
@@ -151,7 +155,8 @@ export const register: Register = on => {
 
     // A reload drops the timer, so this also picks up what came due meanwhile.
     pinned = undefined
-    $.clock.every(TICK_MS, () => void tick($))
+    ticker?.cancel()
+    ticker = $.clock.every(TICK_MS, () => void tick($))
     void tick($)
 
     return next(e)
