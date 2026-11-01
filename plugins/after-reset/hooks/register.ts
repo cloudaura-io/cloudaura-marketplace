@@ -1,16 +1,25 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, SessionRateLimit } from 'claude-code'
 
-import type { Job, Limit } from '../types'
-import { BUFFER_MS, isLimitList, listing, name, parse, pickReset, preview, timing, when } from './when'
+import type { Job, Limit, Reading } from '../types'
+import { asReading, BUFFER_MS, listing, name, parse, pickReset, preview, timing, when } from './when'
 
 const TICK_MS = 30_000
+const RETRY_MS = 5 * 60_000
 const LIMITS_KEY = 'limits'
 
 const jobs = atom({ plugin: 'after-reset', key: 'jobs' } as const, [])
+const seenAt = atom({ plugin: 'after-reset', key: 'seenAt' } as const, null)
 
 // The status line last pinned, so a quiet tick pins nothing.
 let pinned: string | undefined
+
+// Whether a tick is under way, so the next one waits its turn.
+let isTicking = false
+
+// The queue as a /clear left it, for the session it goes on in: $.state is the
+// session's, this module's variables the process's.
+let carried: Job[] | undefined
 
 function toLimits(windows: readonly SessionRateLimit[]): Limit[] {
   return windows.map(({ kind, percentUsed, resetsAt }) =>
@@ -22,18 +31,18 @@ function byDue(a: Job, b: Job): number {
   return a.dueAt - b.dueAt
 }
 
-// This session's readings, else the last any session saw: the windows are the
-// account's, and a new session has none before its first reply.
+// The windows are the account's: this session's reading, or the one any
+// session saved last, whichever was taken later. A new session has none of its
+// own before its first reply.
 async function knownLimits($: EngineInterface): Promise<Limit[]> {
-  const { rateLimits } = await $.session.usage()
+  const live = toLimits((await $.session.usage()).rateLimits)
+  const mine = { at: (await read($, seenAt)) ?? 0, limits: live }
+  const saved = asReading(await $.store.get(LIMITS_KEY))
+  const newest = [mine, saved]
+    .filter((one): one is Reading => one !== undefined && one.limits.length > 0)
+    .reduce<Reading | undefined>((a, b) => (a === undefined || b.at > a.at ? b : a), undefined)
 
-  if (rateLimits.length > 0) {
-    return toLimits(rateLimits)
-  }
-
-  const cached = await $.store.get(LIMITS_KEY)
-
-  return isLimitList(cached) ? cached : []
+  return newest?.limits ?? []
 }
 
 function pin($: EngineInterface, list: readonly Job[], now: number) {
@@ -49,8 +58,19 @@ function pin($: EngineInterface, list: readonly Job[], now: number) {
   }
 }
 
-// Sends what is due, unless a window is still full: then waits for its reset.
-async function tick($: EngineInterface) {
+// Why the prompt did not enter, or undefined once it has: its turn started, or
+// it is queued behind the running one.
+async function send($: EngineInterface, job: Job): Promise<string | undefined> {
+  try {
+    return (await $.prompt.submit({ text: job.text, asUser: true })).drop
+  } catch (error) {
+    return error instanceof Error ? error.message : String(error)
+  }
+}
+
+// Sends what is due, one prompt at a time and each taken off the queue only
+// once it entered, unless a window is still full: then waits for its reset.
+async function sendDue($: EngineInterface) {
   const now = await $.clock.now()
 
   if ((await read($, jobs)).some(job => job.dueAt <= now)) {
@@ -67,22 +87,50 @@ async function tick($: EngineInterface) {
         timeoutMs: 8000,
       })
     } else {
-      let due: Job[] = []
+      for (;;) {
+        const job = (await read($, jobs)).find(one => one.dueAt <= now)
 
-      await update($, jobs, list => {
-        due = list.filter(job => job.dueAt <= now)
+        if (job === undefined) {
+          break
+        }
 
-        return list.filter(job => job.dueAt > now)
-      })
-      for (const job of due) {
-        $.prompt.submit({ text: job.text, asUser: true }).catch(() => {
-          $.ui.toast(`could not send "${preview(job.text)}"`, { timeoutMs: 15000 })
+        const refused = await send($, job)
+
+        if (refused === undefined) {
+          await update($, jobs, list => list.filter(one => one.id !== job.id))
+          continue
+        }
+
+        // Kept, and tried again later; the ones behind it wait for the next tick.
+        const dueAt = now + RETRY_MS
+
+        await update($, jobs, list =>
+          list
+            .map(one => (one.id === job.id ? { ...one, dueAt, reason: 'retrying after a failed send' } : one))
+            .sort(byDue),
+        )
+        $.ui.toast(`could not send "${preview(job.text)}": ${preview(refused)}; trying again at ${when(dueAt, now)}`, {
+          timeoutMs: 15000,
         })
+        break
       }
     }
   }
 
   pin($, await read($, jobs), now)
+}
+
+async function tick($: EngineInterface) {
+  if (isTicking) {
+    return
+  }
+
+  isTicking = true
+  try {
+    await sendDue($)
+  } finally {
+    isTicking = false
+  }
 }
 
 export const register: Register = on => {
@@ -94,6 +142,13 @@ export const register: Register = on => {
       immediate: true,
     })
 
+    // Readings the engine already holds, as when the plugin is turned on
+    // mid-session, count from now; a reload keeps the time it had.
+    if ((await $.session.usage()).rateLimits.length > 0 && (await read($, seenAt)) === null) {
+      const now = await $.clock.now()
+      await update($, seenAt, () => now)
+    }
+
     // A reload drops the timer, so this also picks up what came due meanwhile.
     pinned = undefined
     $.clock.every(TICK_MS, () => void tick($))
@@ -104,7 +159,44 @@ export const register: Register = on => {
 
   on('session.measure', async ($, e, next) => {
     if (e.changed.includes('rateLimits') && e.rateLimits.length > 0) {
-      await $.store.set(LIMITS_KEY, toLimits(e.rateLimits))
+      const reading: Reading = { at: await $.clock.now(), limits: toLimits(e.rateLimits) }
+
+      await update($, seenAt, () => reading.at)
+      await $.store.set(LIMITS_KEY, reading)
+    }
+
+    return next(e)
+  })
+
+  // A /clear goes on in a new session with its $.state empty and no
+  // session.start: the queue is carried over to it, and the person told.
+  on('session.end', async ($, e, next) => {
+    if (e.reason === 'clear') {
+      carried = await read($, jobs)
+    }
+
+    return next(e)
+  })
+
+  on('classic.SessionStart', async ($, e, next) => {
+    const kept = carried
+
+    if (e.source === 'clear' && kept !== undefined) {
+      carried = undefined
+
+      if (kept.length > 0) {
+        const ids = kept.map(job => job.id)
+
+        await update($, jobs, list => [...list.filter(job => !ids.includes(job.id)), ...kept].sort(byDue))
+        $.ui.toast(
+          kept.length === 1
+            ? '1 scheduled prompt kept; /after-reset cancel drops it'
+            : `${kept.length} scheduled prompts kept; /after-reset cancel drops them`,
+          { timeoutMs: 8000 },
+        )
+        pinned = undefined
+        pin($, await read($, jobs), await $.clock.now())
+      }
     }
 
     return next(e)

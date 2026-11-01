@@ -1,4 +1,4 @@
-import type { Job, Limit } from '../types'
+import type { Job, Limit, Reading } from '../types'
 
 const MIN = 60_000
 
@@ -224,4 +224,19 @@ export function isLimitList(value: unknown): value is Limit[] {
         (one.resetsAt === undefined || typeof one.resetsAt === 'string'),
     )
   )
+}
+
+// A reading as the store holds it; 0.1.0 stored the bare list, untimed, so
+// any reading with a time wins over it.
+export function asReading(value: unknown): Reading | undefined {
+  if (isLimitList(value)) {
+    return { at: 0, limits: value }
+  }
+  if (typeof value === 'object' && value !== null && 'at' in value && 'limits' in value) {
+    const { at, limits } = value
+
+    return typeof at === 'number' && isLimitList(limits) ? { at, limits } : undefined
+  }
+
+  return undefined
 }
