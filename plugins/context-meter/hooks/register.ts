@@ -128,8 +128,10 @@ export const register: Register = on => {
     return result
   })
 
-  on('session.end', async ($, e, next) => {
-    if (e.reason === 'clear') {
+  // A /clear goes on in a new session with its $.state empty and no
+  // session.start, so the meter is set up again here, in the new one.
+  on('classic.SessionStart', async ($, e, next) => {
+    if (e.source === 'clear') {
       const { context } = await $.session.usage()
 
       await update($, lastTurnEnd, () => null)

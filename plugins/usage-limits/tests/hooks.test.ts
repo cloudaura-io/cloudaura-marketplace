@@ -92,6 +92,8 @@ function engine(on: On, stored: Record<string, unknown> = {}) {
   }))
   on('session.start', ($, e) => ({ cwd: e.cwd }))
   on('session.measure', ($, e) => ({ changed: e.changed }))
+  on('session.end', ($, e) => ({ sessionId: e.sessionId }))
+  on('classic.SessionStart', () => ({}))
   on('turn.complete', ($, e) => ({ text: e.answer }))
   on('ui.status', ($, e) => {
     statuses.push(e.text)
@@ -137,6 +139,45 @@ function measure(rateLimits: SessionRateLimit[]) {
   return { context: { window: 200_000 }, rateLimits, changed: ['rateLimits' as const] }
 }
 
+// Stands in for the new session a /clear starts: after `wipe()` every value
+// reads as never written, as in the engine's fresh session, until written
+// again. Versions stay as they stood, so the plugin's writes still land.
+function clearable(on: On) {
+  const rewritten = new Set<string>()
+  let isWiped = false
+  const name = (e: { key: string; id?: string }) => `${e.key}#${e.id ?? ''}`
+
+  on('state.get', async ($, e, next) => {
+    const held = await next(e)
+
+    return isWiped && !rewritten.has(name(e)) && 'value' in held
+      ? { value: { ...held.value, value: undefined } }
+      : held
+  })
+  on('state.set', async ($, e, next) => {
+    const result = await next(e)
+
+    if ('value' in result && result.value.isSet) {
+      rewritten.add(name(e))
+    }
+
+    return result
+  })
+
+  return {
+    wipe() {
+      isWiped = true
+      rewritten.clear()
+    },
+  }
+}
+
+async function clear($: Engine, session: { wipe: () => void }) {
+  await $.session.end({ reason: 'clear', sessionId: 's', resume: { id: 's' } })
+  session.wipe()
+  await $.classic.SessionStart({ source: 'clear' })
+}
+
 test('shows fresh readings at start', async ($, on) => {
   const world = engine(on)
   world.live.rateLimits = [WEEK, FIVE_HOUR]
@@ -153,6 +194,20 @@ test('falls back to the last session’s readings, marked stale', async ($, on) 
   await $.session.start(START)
 
   expect(await world.shown($)).toBe('? for shortcuts · ~5h ▰▰▰▱▱ 55% (1h00m)')
+})
+
+test('/clear keeps the windows, marked stale until the next reading', async ($, on) => {
+  const world = engine(on)
+  const session = clearable(on)
+
+  await $.session.start(START)
+  await $.session.measure(measure([FIVE_HOUR, WEEK]))
+  await clear($, session)
+
+  expect(await world.shown($)).toBe('? for shortcuts · ~5h ▰▰▱▱▱ 31% (2h13m) · wk ▰▱▱▱▱ 12% (3d4h)')
+
+  await $.session.measure(measure([FIVE_HOUR, WEEK]))
+  expect(await world.shown($)).toBe('? for shortcuts · 5h ▰▰▱▱▱ 31% (2h13m) · wk ▰▱▱▱▱ 12% (3d4h)')
 })
 
 test('waits when nothing is known yet', async ($, on) => {

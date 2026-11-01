@@ -40,29 +40,44 @@ async function alertPastThreshold($: EngineInterface, list: readonly Limit[]) {
   await update($, alerted, list => [...list, ...keys].slice(-20))
 }
 
+// This session's readings, else the last any session saw: the windows are the
+// account's, so a new session (a /clear's too) need not wait for its own.
+async function seed($: EngineInterface) {
+  const { rateLimits } = await $.session.usage()
+
+  if (rateLimits.length > 0) {
+    const list = toLimits(rateLimits)
+    await update($, limits, () => list)
+    await update($, isFresh, () => true)
+  } else if ((await read($, limits)).length === 0) {
+    // Nothing yet this session (a hot reload keeps $.state): last session's.
+    const cached = await $.store.get(STORE_KEY)
+
+    if (isLimitList(cached) && cached.length > 0) {
+      await update($, limits, () => cached)
+      await update($, isFresh, () => false)
+    }
+  }
+}
+
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     // 0.1.0 pinned its own status line; the limits now ride the hint line.
     $.ui.status(undefined)
-
-    const { rateLimits } = await $.session.usage()
-
-    if (rateLimits.length > 0) {
-      const list = toLimits(rateLimits)
-      await update($, limits, () => list)
-      await update($, isFresh, () => true)
-    } else if ((await read($, limits)).length === 0) {
-      // Nothing yet this session (a hot reload keeps $.state): last session's.
-      const cached = await $.store.get(STORE_KEY)
-
-      if (isLimitList(cached) && cached.length > 0) {
-        await update($, limits, () => cached)
-        await update($, isFresh, () => false)
-      }
-    }
+    await seed($)
 
     // Keeps the countdowns current between readings.
     $.clock.every(REFRESH_MS, () => $.ui.invalidate('ui.render'))
+
+    return next(e)
+  })
+
+  // A /clear goes on in a new session with its $.state empty and no
+  // session.start, so the readings are put back here, in the new one.
+  on('classic.SessionStart', async ($, e, next) => {
+    if (e.source === 'clear') {
+      await seed($)
+    }
 
     return next(e)
   })
