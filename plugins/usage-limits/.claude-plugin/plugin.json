@@ -1,6 +1,6 @@
 {
   "name": "usage-limits",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Shows the 5-hour and weekly rate-limit windows with reset countdowns, on the line under the prompt",
   "author": { "name": "truemarin" },
   "license": "Apache-2.0",

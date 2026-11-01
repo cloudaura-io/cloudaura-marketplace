@@ -1,6 +1,6 @@
 {
   "name": "context-meter",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Shows context window fill (tokens and %) and how much the last turn added, on the line under the prompt",
   "author": { "name": "truemarin" },
   "license": "Apache-2.0",

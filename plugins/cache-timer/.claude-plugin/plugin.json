@@ -1,6 +1,6 @@
 {
   "name": "cache-timer",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Counts down the prompt cache's TTL from the main conversation's last API request, and warns before it expires.",
   "author": { "name": "truemarin" },
   "license": "Apache-2.0",
