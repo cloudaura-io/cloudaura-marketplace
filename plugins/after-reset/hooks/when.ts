@@ -52,6 +52,12 @@ const DURATION = new RegExp(String.raw`^in\s+((?:\d+(?:\.\d+)?\s*${UNIT}\s*)+?)(
 const AT = /^at\s+(\d{1,2}):(\d{2})(?:\s+([\s\S]*))?$/i
 const CANCEL = /^cancel(?:\s+(all|\d+))?$/i
 
+// What reads as a mistyped command rather than a prompt: `cancel` and one more
+// word, `in` or `at` and a number. "cancel the deploy", "in the README" pass.
+const CANCEL_TYPO = /^cancel\s+\S+$/i
+const IN_TYPO = /^in\s+\d/i
+const AT_TYPO = /^at\s+\d/i
+
 function durationMs(spec: string): number {
   let total = 0
 
@@ -119,6 +125,16 @@ export function parse(args: string, now: number): Parsed {
     }
 
     return { kind: 'schedule', text, at: nextClock(hours, minutes, now) }
+  }
+
+  if (CANCEL_TYPO.test(input)) {
+    return { kind: 'error', message: `"cancel" takes a prompt number or "all". ${USAGE}` }
+  }
+  if (IN_TYPO.test(input)) {
+    return { kind: 'error', message: `"in" takes hours and minutes, like in 2h30m. ${USAGE}` }
+  }
+  if (AT_TYPO.test(input)) {
+    return { kind: 'error', message: `"at" takes a 24-hour time, like at 21:30. ${USAGE}` }
   }
 
   return { kind: 'schedule', text: input }

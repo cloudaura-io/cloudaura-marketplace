@@ -41,6 +41,19 @@ test('at HH:MM is today, or tomorrow once passed', () => {
   expect(parse('at 14:30', NOW).kind).toBe('error')
 })
 
+test('a mistyped command is refused, not queued as a prompt', () => {
+  expect(parse('cancel first', NOW)).toEqual({ kind: 'error', message: expect.stringContaining('"cancel" takes') })
+  expect(parse('at 9:00pm deploy', NOW)).toEqual({ kind: 'error', message: expect.stringContaining('"at" takes') })
+  expect(parse('at 9 deploy', NOW)).toEqual({ kind: 'error', message: expect.stringContaining('"at" takes') })
+  expect(parse('in 2 days check', NOW)).toEqual({ kind: 'error', message: expect.stringContaining('"in" takes') })
+})
+
+test('prompts that only start like a command still queue', () => {
+  expect(parse('cancel the deploy and roll back', NOW)).toEqual({ kind: 'schedule', text: 'cancel the deploy and roll back' })
+  expect(parse('in the tests, fix the flake', NOW)).toEqual({ kind: 'schedule', text: 'in the tests, fix the flake' })
+  expect(parse('at some point, tidy up', NOW)).toEqual({ kind: 'schedule', text: 'at some point, tidy up' })
+})
+
 test('waits for the latest full window, else the nearest reset', () => {
   const fiveHour = { kind: 'five_hour', percentUsed: 100, resetsAt: iso(NOW + 2 * HOUR) }
   const week = { kind: 'seven_day', percentUsed: 64, resetsAt: iso(NOW + 50 * HOUR) }
