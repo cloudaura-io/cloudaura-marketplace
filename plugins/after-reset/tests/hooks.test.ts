@@ -65,7 +65,7 @@ test('sends the prompt as the person’s, just after the full window resets', as
     'Will send at 15:07 (in 2h07m), after the 5-hour limit resets: continue where you left off\n' +
       'Keep this session open. /after-reset lists, /after-reset cancel undoes.',
   )
-  expect(world.statuses.at(-1)).toBe('after-reset: prompt at 15:07 (in 2h07m)')
+  expect(world.statuses.at(-1)).toBe('prompt at 15:07 (in 2h07m)')
 
   await world.clock.advance(2 * HOUR + 6 * MIN)
   expect(world.sent).toEqual([])
@@ -99,7 +99,7 @@ test('postpones when another window is full by the time it is due', async ($, on
 
   expect(world.sent).toEqual([])
   expect(world.toasts).toEqual([
-    'after-reset: the weekly limit is still reached; waiting until Sat 10 Oct 15:02 (in 1d23h)',
+    'the weekly limit is still reached; waiting until Sat 10 Oct 15:02 (in 1d23h)',
   ])
 })
 
@@ -111,7 +111,7 @@ test('in and at need no known reset', async ($, on) => {
   expect(await run($, 'go on')).toContain('No reset time is known yet')
   expect(await run($, 'in 90m first')).toContain('Will send at 14:30 (in 1h30m): first')
   expect(await run($, 'at 14:00 second')).toContain('Will send at 14:00 (in 1h00m): second')
-  expect(world.statuses.at(-1)).toBe('after-reset: 2 prompts, next at 14:00 (in 1h00m)')
+  expect(world.statuses.at(-1)).toBe('2 prompts, next at 14:00 (in 1h00m)')
 
   await world.clock.advance(90 * MIN)
   expect(world.sent.map(e => e.text)).toEqual(['second', 'first'])

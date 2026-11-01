@@ -41,7 +41,7 @@ function pin($: EngineInterface, list: readonly Job[], now: number) {
   const text =
     next === undefined
       ? undefined
-      : `after-reset: ${list.length === 1 ? 'prompt' : `${list.length} prompts, next`} at ${when(next.dueAt, now)}`
+      : `${list.length === 1 ? 'prompt' : `${list.length} prompts, next`} at ${when(next.dueAt, now)}`
 
   if (text !== pinned) {
     pinned = text
@@ -63,7 +63,7 @@ async function tick($: EngineInterface) {
       await update($, jobs, list =>
         list.map(job => (job.dueAt <= now ? { ...job, dueAt, reason } : job)).sort(byDue),
       )
-      $.ui.toast(`after-reset: the ${name(reset.kind)} is still reached; waiting until ${when(dueAt, now)}`, {
+      $.ui.toast(`the ${name(reset.kind)} is still reached; waiting until ${when(dueAt, now)}`, {
         timeoutMs: 8000,
       })
     } else {
@@ -76,7 +76,7 @@ async function tick($: EngineInterface) {
       })
       for (const job of due) {
         $.prompt.submit({ text: job.text, asUser: true }).catch(() => {
-          $.ui.toast(`after-reset: could not send "${preview(job.text)}"`, { timeoutMs: 15000 })
+          $.ui.toast(`could not send "${preview(job.text)}"`, { timeoutMs: 15000 })
         })
       }
     }
