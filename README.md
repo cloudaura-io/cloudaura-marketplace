@@ -16,6 +16,12 @@ claude plugin marketplace add cloudaura-io/cloudaura-marketplace
 | Plugin | Description |
 |--------|-------------|
 | [conductor](plugins/conductor/) | Context-driven development framework. Measure twice, code once.<br>Ported from [gemini-cli-extensions/conductor](https://github.com/gemini-cli-extensions/conductor). |
+| [context-meter](plugins/context-meter/) | Context window fill (tokens and %) and how much the last turn added, on the line under the prompt. |
+| [cache-timer](plugins/cache-timer/) | Counts down the prompt cache's TTL on the line under the prompt, with a toast before it expires. |
+| [usage-limits](plugins/usage-limits/) | The 5-hour and weekly rate-limit windows with reset countdowns, on the line under the prompt. |
+| [after-reset](plugins/after-reset/) | `/after-reset <prompt>` sends a prompt once your usage limit resets, or at a time you name. |
+
+context-meter, cache-timer and usage-limits share one row under the prompt, in that order; install any of them on their own or together.
 
 ## Tools
 
